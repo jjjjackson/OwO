@@ -1,0 +1,51 @@
+{
+  "name": "ayush-opencode",
+  "version": "0.1.0",
+  "description": "Custom OpenCode agents (explorer, librarian, oracle, ui-planner) with orchestration injection for Build/Plan agents",
+  "author": "Ayush",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "bun run clean && bun run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "agents",
+    "explorer",
+    "librarian",
+    "oracle",
+    "ui-planner",
+    "ai",
+    "llm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CYBERBOYAYUSH/ayush-opencode.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.0.162",
+    "@opencode-ai/sdk": "^1.0.162"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.7.3"
+  }
+}
