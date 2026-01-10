@@ -3,8 +3,8 @@ import { readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import stripJsonComments from "strip-json-comments"
 import type { OpencodeConfig, ConfigFormat } from "./types"
+import { PACKAGE_NAME } from "./constants"
 
-const PACKAGE_NAME = "zenox"
 const CONFIG_FILENAMES = ["opencode.json", "opencode.jsonc"]
 
 export function findConfigFile(directory: string): { path: string; format: ConfigFormat } | null {

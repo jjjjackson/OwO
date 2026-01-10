@@ -8,9 +8,19 @@ import {
   readConfig,
   isPluginInstalled,
 } from "./config-manager"
+import {
+  readZenoxConfig,
+  updateAgentModels,
+  getCurrentModels,
+  getZenoxConfigPath,
+} from "./zenox-config"
+import {
+  extractUserModels,
+  askConfigureModels,
+  pickModelsForAllAgents,
+} from "./model-picker"
+import { PACKAGE_NAME } from "./constants"
 import type { InstallOptions } from "./types"
-
-const PACKAGE_NAME = "zenox"
 
 export async function runInstall(options: InstallOptions = {}): Promise<void> {
   const { noTui = false, configPath: customConfigPath } = options
@@ -31,6 +41,8 @@ async function runInteractive(cwd: string, customConfigPath?: string): Promise<v
     ? { path: customConfigPath, format: "json" as const }
     : findConfigFile(cwd)
 
+  let opencodeConfig = null
+
   if (!configFile) {
     const shouldCreate = await p.confirm({
       message: "No opencode.json found. Create one?",
@@ -49,50 +61,91 @@ async function runInteractive(cwd: string, customConfigPath?: string): Promise<v
     try {
       await createDefaultConfig(configPath)
       spinner.stop("Created opencode.json")
-      p.outro(pc.green(`${PACKAGE_NAME} installed successfully!`))
     } catch (err) {
       spinner.stop("Failed to create config")
       p.log.error(err instanceof Error ? err.message : "Unknown error")
       process.exit(1)
     }
-    return
-  }
+  } else {
+    // Config exists - check if already installed
+    try {
+      const result = await readConfig(configFile.path)
+      opencodeConfig = result.config
 
-  // Config exists - check if already installed
-  try {
-    const { config } = await readConfig(configFile.path)
-    if (isPluginInstalled(config)) {
-      p.log.warn(`${PACKAGE_NAME} is already installed in ${configFile.path}`)
-      p.outro(pc.yellow("No changes made"))
-      return
+      if (isPluginInstalled(opencodeConfig)) {
+        p.log.info(`${PACKAGE_NAME} is already in ${configFile.path}`)
+      } else {
+        const shouldInstall = await p.confirm({
+          message: `Add ${PACKAGE_NAME} to ${configFile.path}?`,
+          initialValue: true,
+        })
+
+        if (p.isCancel(shouldInstall) || !shouldInstall) {
+          p.cancel("Installation cancelled")
+          process.exit(0)
+        }
+
+        const spinner = p.spinner()
+        spinner.start(`Adding ${PACKAGE_NAME} to plugins`)
+
+        try {
+          await installPlugin(configFile.path)
+          spinner.stop(`Added ${PACKAGE_NAME} to plugins`)
+        } catch (err) {
+          spinner.stop("Failed to install")
+          p.log.error(err instanceof Error ? err.message : "Unknown error")
+          process.exit(1)
+        }
+      }
+    } catch (err) {
+      p.log.error(`Failed to read config: ${err instanceof Error ? err.message : "Unknown error"}`)
+      process.exit(1)
     }
-  } catch (err) {
-    p.log.error(`Failed to read config: ${err instanceof Error ? err.message : "Unknown error"}`)
-    process.exit(1)
   }
 
-  const shouldInstall = await p.confirm({
-    message: `Add ${PACKAGE_NAME} to ${configFile.path}?`,
-    initialValue: true,
-  })
+  // Model configuration step
+  const configureChoice = await askConfigureModels()
 
-  if (p.isCancel(shouldInstall) || !shouldInstall) {
+  if (configureChoice === null) {
     p.cancel("Installation cancelled")
     process.exit(0)
   }
 
-  const spinner = p.spinner()
-  spinner.start(`Adding ${PACKAGE_NAME} to plugins`)
+  if (configureChoice === "customize") {
+    // Get user's custom models from their opencode.json
+    const userModels = opencodeConfig ? extractUserModels(opencodeConfig) : []
 
-  try {
-    await installPlugin(configFile.path)
-    spinner.stop(`Added ${PACKAGE_NAME} to plugins`)
-    p.outro(pc.green(`${PACKAGE_NAME} installed successfully!`))
-  } catch (err) {
-    spinner.stop("Failed to install")
-    p.log.error(err instanceof Error ? err.message : "Unknown error")
-    process.exit(1)
+    // Get current zenox config if exists
+    const zenoxConfig = await readZenoxConfig()
+    const currentModels = getCurrentModels(zenoxConfig)
+
+    // Pick models for all agents
+    const selectedModels = await pickModelsForAllAgents(userModels, currentModels)
+
+    if (selectedModels === null) {
+      p.cancel("Installation cancelled")
+      process.exit(0)
+    }
+
+    // Only create zenox.json if there are custom models
+    if (Object.keys(selectedModels).length > 0) {
+      const spinner = p.spinner()
+      spinner.start("Saving model configuration")
+
+      try {
+        await updateAgentModels(selectedModels)
+        spinner.stop(`Created ${getZenoxConfigPath()}`)
+      } catch (err) {
+        spinner.stop("Failed to save config")
+        p.log.error(err instanceof Error ? err.message : "Unknown error")
+        process.exit(1)
+      }
+    } else {
+      p.log.info("Using default models - no zenox.json needed")
+    }
   }
+
+  p.outro(pc.green(`${PACKAGE_NAME} installed successfully!`))
 }
 
 async function runNonInteractive(cwd: string, customConfigPath?: string): Promise<void> {
@@ -105,6 +158,7 @@ async function runNonInteractive(cwd: string, customConfigPath?: string): Promis
     const configPath = getDefaultConfigPath(cwd)
     await createDefaultConfig(configPath)
     console.log(`Created opencode.json with ${PACKAGE_NAME}`)
+    console.log("Using default models (run 'bunx zenox config' to customize)")
     return
   }
 
@@ -118,4 +172,5 @@ async function runNonInteractive(cwd: string, customConfigPath?: string): Promis
   console.log(`Adding ${PACKAGE_NAME} to ${configFile.path}...`)
   await installPlugin(configFile.path)
   console.log(`${PACKAGE_NAME} installed successfully!`)
+  console.log("Using default models (run 'bunx zenox config' to customize)")
 }

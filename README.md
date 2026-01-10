@@ -9,7 +9,7 @@ OpenCode plugin for intelligent agent orchestration with specialized subagents a
 - **Auto-Update**: Automatic update checking with toast notifications
 - **Auto-Loaded MCP Servers**: exa, grep_app, sequential-thinking
 - **Smart Orchestration**: Automatically teaches Build/Plan agents how to delegate
-- **CLI Installer**: Easy setup via `bunx zenox install`
+- **CLI Installer**: Easy setup with model configuration via `bunx zenox install`
 
 ## Installation
 
@@ -22,7 +22,8 @@ bunx zenox install
 This will:
 - Create `opencode.json` if it doesn't exist
 - Add zenox to your plugins array
-- Preserve existing configuration
+- Let you configure custom models for each agent (optional)
+- Detect models from your existing opencode.json config
 
 ### Manual Install
 
@@ -34,18 +35,22 @@ Add to your `opencode.json`:
 }
 ```
 
-> **Note**: Don't pin the version (e.g., `zenox@0.1.0`) if you want automatic updates.
+> **Note**: Don't pin the version (e.g., `zenox@1.0.0`) if you want automatic updates.
 
 Restart OpenCode and the plugin is ready to use.
 
 ## CLI Commands
 
 ```bash
-# Interactive install with TUI
+# Interactive install with model configuration
 bunx zenox install
 
-# Non-interactive mode (CI/scripts)
+# Non-interactive mode (uses default models)
 bunx zenox install --no-tui
+
+# Reconfigure agent models later
+bunx zenox config
+bunx zenox models  # alias
 
 # Specify config path
 bunx zenox install --config ./path/to/opencode.json
@@ -53,6 +58,18 @@ bunx zenox install --config ./path/to/opencode.json
 # Help
 bunx zenox --help
 ```
+
+### Model Configuration
+
+During installation, you can choose to customize models for each agent:
+
+1. **Use recommended defaults** - No config file needed
+2. **Customize models** - Pick from:
+   - Recommended default model
+   - Models defined in your opencode.json
+   - Enter a custom model name (see [models.dev](https://models.dev))
+
+Custom models are saved to `~/.config/opencode/zenox.json`.
 
 ## Agents
 
@@ -62,7 +79,7 @@ Fast codebase search specialist.
 - "Find all files containing Y"
 - Pattern matching and locating implementations
 
-**Model**: `anthropic/claude-haiku-4-5`
+**Default Model**: `anthropic/claude-haiku-4-5`
 
 ### @librarian
 Open-source research agent.
@@ -70,7 +87,7 @@ Open-source research agent.
 - "Show me implementation examples"
 - Finding official documentation
 
-**Model**: `anthropic/claude-sonnet-4-5`
+**Default Model**: `anthropic/claude-sonnet-4-5`
 
 ### @oracle
 Strategic technical advisor.
@@ -78,7 +95,7 @@ Strategic technical advisor.
 - Code review and debugging strategy
 - Technical trade-offs analysis
 
-**Model**: `openai/gpt-5.2-high`
+**Default Model**: `openai/gpt-5.2`
 
 ### @ui-planner
 Designer-turned-developer.
@@ -86,7 +103,7 @@ Designer-turned-developer.
 - Frontend aesthetics and animations
 - Visual design without mockups
 
-**Model**: `google/gemini-3-pro-high`
+**Default Model**: `google/gemini-3-pro-high`
 
 ## Background Tasks
 
@@ -122,11 +139,21 @@ Zenox automatically checks for updates on startup:
 3. **Cache Invalidation**: If update available, clears Bun cache
 4. **Update Toast**: Notifies you to restart OpenCode
 
-To disable auto-updates, pin your version: `"zenox@0.1.0"`
+To disable auto-updates, pin your version: `"zenox@1.0.0"`
 
-## Configuration (Optional)
+## Configuration
 
-Create `~/.config/opencode/zenox.json` or `.opencode/zenox.json`:
+### Via CLI (Recommended)
+
+```bash
+bunx zenox config
+```
+
+Interactive UI to select models for each agent.
+
+### Manual Configuration
+
+Create `~/.config/opencode/zenox.json`:
 
 ```json
 {
