@@ -1,5 +1,6 @@
 export interface OpencodeConfig {
   plugins?: string[]
+  plugin?: string[]  // OpenCode also supports singular "plugin"
   [key: string]: unknown
 }
 

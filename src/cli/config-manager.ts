@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
+import stripJsonComments from "strip-json-comments"
 import type { OpencodeConfig, ConfigFormat } from "./types"
 
 const PACKAGE_NAME = "zenox"
@@ -19,22 +20,22 @@ export function findConfigFile(directory: string): { path: string; format: Confi
 
 export async function readConfig(configPath: string): Promise<{ content: string; config: OpencodeConfig }> {
   const content = await readFile(configPath, "utf-8")
-  // Strip comments for JSONC files
-  const jsonContent = content
-    .replace(/\/\/.*$/gm, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
+  // Use proper JSONC parser that handles strings correctly
+  const jsonContent = stripJsonComments(content, { trailingCommas: true })
   const config = JSON.parse(jsonContent) as OpencodeConfig
   return { content, config }
 }
 
 export function isPluginInstalled(config: OpencodeConfig): boolean {
-  const plugins = config.plugins ?? []
+  // Handle both "plugins" (array) and "plugin" (array) - OpenCode supports both
+  const plugins = config.plugins ?? config.plugin ?? []
   return plugins.some((p) => p === PACKAGE_NAME || p.startsWith(`${PACKAGE_NAME}@`))
 }
 
 function addPluginToJsonc(content: string): string {
   // For JSONC, preserve comments by using regex insertion
-  const pluginsMatch = content.match(/"plugins"\s*:\s*\[/)
+  // Check for "plugins" first, then "plugin"
+  const pluginsMatch = content.match(/"plugins"\s*:\s*\[/) ?? content.match(/"plugin"\s*:\s*\[/)
 
   if (pluginsMatch) {
     const insertIndex = content.indexOf("[", pluginsMatch.index!) + 1
@@ -60,17 +61,21 @@ function addPluginToJsonc(content: string): string {
     if (afterTrimmed.startsWith("}")) {
       return `${beforeBrace}\n  "plugins": ["${PACKAGE_NAME}"]\n}`
     } else {
-      return `${beforeBrace}\n  "plugins": ["${PACKAGE_NAME}"],${afterBrace}`
+      return `${beforeBrace}\n  "plugins": ["${PACKAGE_NAME}"],\n  ${afterBrace.trimStart()}`
     }
   }
 }
 
 function addPluginToJson(config: OpencodeConfig): string {
   // For plain JSON, use proper parsing to maintain clean formatting
+  // Preserve the key name used in original config ("plugin" or "plugins")
+  const existingKey = config.plugins ? "plugins" : config.plugin ? "plugin" : "plugins"
+  const existingPlugins = config.plugins ?? config.plugin ?? []
+  
   const newConfig = {
-    plugins: [PACKAGE_NAME, ...(config.plugins ?? [])],
+    [existingKey]: [PACKAGE_NAME, ...existingPlugins],
     ...Object.fromEntries(
-      Object.entries(config).filter(([key]) => key !== "plugins")
+      Object.entries(config).filter(([key]) => key !== "plugins" && key !== "plugin")
     ),
   }
   return JSON.stringify(newConfig, null, 2) + "\n"
