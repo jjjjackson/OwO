@@ -99,21 +99,20 @@ export async function runConfig(): Promise<void> {
     }
   }
 
-  if (Object.keys(finalModels).length > 0) {
-    const spinner = p.spinner()
-    spinner.start("Saving model configuration")
+  const spinner = p.spinner()
+  spinner.start("Saving model configuration")
 
-    try {
-      // Rebuild agents config from scratch
-      await updateAgentModels(finalModels)
+  try {
+    await updateAgentModels(finalModels)
+    if (Object.keys(finalModels).length > 0) {
       spinner.stop(`Updated ${getZenoxConfigPath()}`)
-    } catch (err) {
-      spinner.stop("Failed to save config")
-      p.log.error(err instanceof Error ? err.message : "Unknown error")
-      process.exit(1)
+    } else {
+      spinner.stop("All agents using default models")
     }
-  } else {
-    p.log.info("All agents using default models - zenox.json not needed")
+  } catch (err) {
+    spinner.stop("Failed to save config")
+    p.log.error(err instanceof Error ? err.message : "Unknown error")
+    process.exit(1)
   }
 
   p.outro(pc.green("Configuration updated!"))
