@@ -23,35 +23,44 @@ export async function askConfigureMcps(): Promise<"keep_all" | "customize" | nul
   return result as "keep_all" | "customize"
 }
 
-export async function pickMcpsToDisable(
+export async function pickMcpsToEnable(
   currentDisabled: McpName[]
 ): Promise<McpName[] | null> {
   p.note(
-    `${pc.dim("All MCPs are free and recommended for best experience.")}\n${pc.dim("Only disable if you have specific conflicts.")}`,
+    `${pc.dim("All MCPs are free and recommended for best experience.")}\n${pc.dim("Unselect only if you have specific conflicts.")}`,
     "MCP Servers"
   )
 
+  const allMcpNames = MCP_SERVERS.map((m) => m.name)
+
   const options = MCP_SERVERS.map((mcp) => {
-    const isDisabled = currentDisabled.includes(mcp.name)
     const hint = mcp.recommended
       ? `${mcp.description} ${pc.green("• Recommended")}`
       : mcp.description
 
     return {
       value: mcp.name,
-      label: `${mcp.displayName}${isDisabled ? pc.yellow(" (Currently disabled)") : ""}`,
+      label: mcp.displayName,
       hint,
     }
   })
 
+  // Pre-select all MCPs that are currently enabled (not in disabled list)
+  const initialValues = allMcpNames.filter((name) => !currentDisabled.includes(name))
+
   const selected = await p.multiselect({
-    message: "Select MCPs to DISABLE:",
+    message: "Select MCPs to ENABLE (unselect to disable):",
     options,
+    initialValues,
     required: false,
   })
 
   if (p.isCancel(selected)) return null
-  return selected as McpName[]
+
+  // Return the MCPs that were NOT selected (these should be disabled)
+  const enabledMcps = selected as McpName[]
+  const disabledMcps = allMcpNames.filter((name) => !enabledMcps.includes(name))
+  return disabledMcps
 }
 
 export function showMcpStatus(disabledMcps: McpName[]): void {

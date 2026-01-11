@@ -6,7 +6,7 @@ import {
   updateDisabledMcps,
   getZenoxConfigPath,
 } from "./zenox-config"
-import { pickMcpsToDisable, showMcpStatus } from "./mcp-picker"
+import { pickMcpsToEnable, showMcpStatus } from "./mcp-picker"
 import { PACKAGE_NAME } from "./constants"
 
 export async function runMcp(): Promise<void> {
@@ -17,7 +17,7 @@ export async function runMcp(): Promise<void> {
 
   showMcpStatus(currentDisabled)
 
-  const newDisabled = await pickMcpsToDisable(currentDisabled)
+  const newDisabled = await pickMcpsToEnable(currentDisabled)
 
   if (newDisabled === null) {
     p.cancel("Configuration cancelled")

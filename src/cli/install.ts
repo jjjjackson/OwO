@@ -21,7 +21,7 @@ import {
   askConfigureModels,
   pickModelsForAllAgents,
 } from "./model-picker"
-import { askConfigureMcps, pickMcpsToDisable } from "./mcp-picker"
+import { askConfigureMcps, pickMcpsToEnable } from "./mcp-picker"
 import { PACKAGE_NAME } from "./constants"
 import type { InstallOptions } from "./types"
 
@@ -159,7 +159,7 @@ async function runInteractive(cwd: string, customConfigPath?: string): Promise<v
   if (mcpChoice === "customize") {
     const zenoxConfig = await readZenoxConfig()
     const currentDisabled = getDisabledMcps(zenoxConfig)
-    const disabledMcps = await pickMcpsToDisable(currentDisabled)
+    const disabledMcps = await pickMcpsToEnable(currentDisabled)
 
     if (disabledMcps === null) {
       p.cancel("Installation cancelled")
