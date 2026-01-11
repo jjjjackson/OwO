@@ -99,17 +99,17 @@ function addPluginToJsonc(content: string): string {
     const afterTrimmed = afterBrace.trimStart()
 
     if (afterTrimmed.startsWith("}")) {
-      return `${beforeBrace}\n  "plugins": ["${PACKAGE_NAME}"]\n}`
+      return `${beforeBrace}\n  "plugin": ["${PACKAGE_NAME}"]\n}`
     } else {
-      return `${beforeBrace}\n  "plugins": ["${PACKAGE_NAME}"],\n  ${afterBrace.trimStart()}`
+      return `${beforeBrace}\n  "plugin": ["${PACKAGE_NAME}"],\n  ${afterBrace.trimStart()}`
     }
   }
 }
 
 function addPluginToJson(config: OpencodeConfig): string {
   // For plain JSON, use proper parsing to maintain clean formatting
-  // Preserve the key name used in original config ("plugin" or "plugins")
-  const existingKey = config.plugins ? "plugins" : config.plugin ? "plugin" : "plugins"
+  // Preserve the key name used in original config, default to "plugin" (OpenCode standard)
+  const existingKey = config.plugins ? "plugins" : config.plugin ? "plugin" : "plugin"
   const existingPlugins = config.plugins ?? config.plugin ?? []
   
   const newConfig = {
@@ -150,7 +150,7 @@ export function getGlobalConfigPath(): string {
 
 export async function createDefaultConfig(configPath: string): Promise<void> {
   const defaultConfig = {
-    plugins: [PACKAGE_NAME],
+    plugin: [PACKAGE_NAME],
   }
   await writeFile(configPath, JSON.stringify(defaultConfig, null, 2) + "\n", "utf-8")
 }

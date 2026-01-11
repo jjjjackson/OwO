@@ -14,6 +14,7 @@ import {
 } from "./model-picker"
 import { PACKAGE_NAME, AGENTS, DEFAULT_MODELS } from "./constants"
 import type { AgentName } from "./constants"
+import type { UserModelInfo } from "./types"
 
 export async function runConfig(): Promise<void> {
   p.intro(pc.cyan(`${PACKAGE_NAME} model configurator`))
@@ -21,7 +22,7 @@ export async function runConfig(): Promise<void> {
   const cwd = process.cwd()
 
   // Try to read opencode.json for user's custom models
-  let userModels: string[] = []
+  let userModels: UserModelInfo[] = []
   const configFile = findConfigFile(cwd)
   if (configFile) {
     try {

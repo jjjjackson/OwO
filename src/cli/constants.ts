@@ -42,3 +42,33 @@ export const DEFAULT_MODELS: Record<AgentName, string> = {
   oracle: "openai/gpt-5.2",
   "ui-planner": "google/gemini-3-pro-high",
 }
+
+export type McpName = "exa" | "grep_app" | "sequential-thinking"
+
+export interface McpInfo {
+  name: McpName
+  displayName: string
+  description: string
+  recommended: boolean
+}
+
+export const MCP_SERVERS: McpInfo[] = [
+  {
+    name: "exa",
+    displayName: "Exa",
+    description: "Web search & code context via Exa AI",
+    recommended: true,
+  },
+  {
+    name: "grep_app",
+    displayName: "grep.app",
+    description: "GitHub code search - find real-world examples",
+    recommended: true,
+  },
+  {
+    name: "sequential-thinking",
+    displayName: "Sequential Thinking",
+    description: "Structured reasoning for complex problems",
+    recommended: true,
+  },
+]

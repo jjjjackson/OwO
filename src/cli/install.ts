@@ -11,7 +11,9 @@ import {
 import {
   readZenoxConfig,
   updateAgentModels,
+  updateDisabledMcps,
   getCurrentModels,
+  getDisabledMcps,
   getZenoxConfigPath,
 } from "./zenox-config"
 import {
@@ -19,6 +21,7 @@ import {
   askConfigureModels,
   pickModelsForAllAgents,
 } from "./model-picker"
+import { askConfigureMcps, pickMcpsToDisable } from "./mcp-picker"
 import { PACKAGE_NAME } from "./constants"
 import type { InstallOptions } from "./types"
 
@@ -142,6 +145,39 @@ async function runInteractive(cwd: string, customConfigPath?: string): Promise<v
       }
     } else {
       p.log.info("Using default models - no zenox.json needed")
+    }
+  }
+
+  // MCP configuration step
+  const mcpChoice = await askConfigureMcps()
+
+  if (mcpChoice === null) {
+    p.cancel("Installation cancelled")
+    process.exit(0)
+  }
+
+  if (mcpChoice === "customize") {
+    const zenoxConfig = await readZenoxConfig()
+    const currentDisabled = getDisabledMcps(zenoxConfig)
+    const disabledMcps = await pickMcpsToDisable(currentDisabled)
+
+    if (disabledMcps === null) {
+      p.cancel("Installation cancelled")
+      process.exit(0)
+    }
+
+    if (disabledMcps.length > 0) {
+      const spinner = p.spinner()
+      spinner.start("Saving MCP configuration")
+
+      try {
+        await updateDisabledMcps(disabledMcps)
+        spinner.stop(`Disabled ${disabledMcps.length} MCP(s)`)
+      } catch (err) {
+        spinner.stop("Failed to save MCP config")
+        p.log.error(err instanceof Error ? err.message : "Unknown error")
+        process.exit(1)
+      }
     }
   }
 

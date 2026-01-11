@@ -1,29 +1,66 @@
 import * as p from "@clack/prompts"
-import type { OpencodeConfig } from "./types"
+import pc from "picocolors"
+import type { OpencodeConfig, UserModelInfo, ProviderConfig, ModelConfig } from "./types"
 import type { AgentName, AgentInfo } from "./constants"
 import { AGENTS, DEFAULT_MODELS } from "./constants"
 
 const CUSTOM_MODEL_OPTION = "__custom__"
 
-export function extractUserModels(config: OpencodeConfig): string[] {
-  const models: Set<string> = new Set()
+function formatModelName(modelId: string): string {
+  return modelId
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
 
-  // Extract models from provider.*.models
-  const provider = config.provider as Record<string, unknown> | undefined
-  if (!provider) return []
+export function extractUserModels(config: OpencodeConfig): UserModelInfo[] {
+  const models: Map<string, UserModelInfo> = new Map()
 
-  for (const providerConfig of Object.values(provider)) {
-    if (typeof providerConfig !== "object" || providerConfig === null) continue
+  // 1. Extract from provider.*.models (with provider prefix)
+  const provider = config.provider
+  if (provider) {
+    for (const [providerName, providerConfig] of Object.entries(provider)) {
+      if (!providerConfig || typeof providerConfig !== "object") continue
+      const providerModels = (providerConfig as ProviderConfig).models
+      if (!providerModels) continue
 
-    const providerModels = (providerConfig as Record<string, unknown>).models
-    if (typeof providerModels !== "object" || providerModels === null) continue
-
-    for (const modelId of Object.keys(providerModels)) {
-      models.add(modelId)
+      for (const [modelId, modelConfig] of Object.entries(providerModels)) {
+        const fullId = `${providerName}/${modelId}`
+        const cfg = modelConfig as ModelConfig | undefined
+        models.set(fullId, {
+          id: fullId,
+          displayName: cfg?.name ?? formatModelName(modelId),
+          provider: providerName,
+        })
+      }
     }
   }
 
-  return Array.from(models).sort()
+  // 2. Extract from top-level "model"
+  if (config.model && typeof config.model === "string" && config.model.includes("/")) {
+    const [providerName, modelId] = config.model.split("/")
+    if (!models.has(config.model)) {
+      models.set(config.model, {
+        id: config.model,
+        displayName: formatModelName(modelId),
+        provider: providerName,
+      })
+    }
+  }
+
+  // 3. Extract from top-level "small_model"
+  if (config.small_model && typeof config.small_model === "string" && config.small_model.includes("/")) {
+    const [providerName, modelId] = config.small_model.split("/")
+    if (!models.has(config.small_model)) {
+      models.set(config.small_model, {
+        id: config.small_model,
+        displayName: formatModelName(modelId),
+        provider: providerName,
+      })
+    }
+  }
+
+  return Array.from(models.values()).sort((a, b) => a.id.localeCompare(b.id))
 }
 
 interface ModelOption {
@@ -34,10 +71,11 @@ interface ModelOption {
 
 function buildModelOptions(
   agent: AgentInfo,
-  userModels: string[],
+  userModels: UserModelInfo[],
   currentModel?: string
 ): ModelOption[] {
   const options: ModelOption[] = []
+  const userModelIds = userModels.map((m) => m.id)
 
   // 1. Recommended default
   const isDefault = !currentModel || currentModel === agent.defaultModel
@@ -47,14 +85,14 @@ function buildModelOptions(
     hint: "Recommended - Default",
   })
 
-  // 2. User's custom models from their config
+  // 2. User's custom models from their config with display names
   for (const model of userModels) {
-    if (model === agent.defaultModel) continue // Skip if same as default
-    const isCurrent = currentModel === model
+    if (model.id === agent.defaultModel) continue
+    const isCurrent = currentModel === model.id
     options.push({
-      value: model,
-      label: `${model}${isCurrent ? " (Current)" : ""}`,
-      hint: "From your config",
+      value: model.id,
+      label: `${model.id}${isCurrent ? " (Current)" : ""}`,
+      hint: `${model.displayName} • Your config`,
     })
   }
 
@@ -62,7 +100,7 @@ function buildModelOptions(
   if (
     currentModel &&
     currentModel !== agent.defaultModel &&
-    !userModels.includes(currentModel)
+    !userModelIds.includes(currentModel)
   ) {
     options.push({
       value: currentModel,
@@ -83,13 +121,19 @@ function buildModelOptions(
 
 export async function pickModelForAgent(
   agent: AgentInfo,
-  userModels: string[],
+  userModels: UserModelInfo[],
   currentModel?: string
 ): Promise<string | null> {
+  // Show agent info clearly before selection
+  p.note(
+    `${pc.bold(agent.description)}\n${pc.dim(`Default: ${agent.defaultModel}`)}`,
+    agent.displayName
+  )
+
   const options = buildModelOptions(agent, userModels, currentModel)
 
   const selected = await p.select({
-    message: `${agent.displayName} agent model:`,
+    message: "Select model:",
     options,
   })
 
@@ -114,7 +158,7 @@ export async function pickModelForAgent(
 }
 
 export async function pickModelsForAllAgents(
-  userModels: string[],
+  userModels: UserModelInfo[],
   currentModels: Partial<Record<AgentName, string>>
 ): Promise<Partial<Record<AgentName, string>> | null> {
   const result: Partial<Record<AgentName, string>> = {}

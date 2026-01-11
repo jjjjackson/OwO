@@ -2,6 +2,7 @@
 import { Command } from "commander"
 import { runInstall } from "./install"
 import { runConfig } from "./config"
+import { runMcp } from "./mcp"
 
 const program = new Command()
 
@@ -34,6 +35,18 @@ program
   .action(async () => {
     try {
       await runConfig()
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : "Unknown error")
+      process.exit(1)
+    }
+  })
+
+program
+  .command("mcp")
+  .description("Configure MCP servers (enable/disable)")
+  .action(async () => {
+    try {
+      await runMcp()
     } catch (err) {
       console.error(err instanceof Error ? err.message : "Unknown error")
       process.exit(1)
