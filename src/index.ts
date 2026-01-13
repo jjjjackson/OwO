@@ -59,8 +59,13 @@ const ZenoxPlugin: Plugin = async (ctx) => {
     // Register background task tools
     tool: backgroundTools,
 
-    // Register hooks (keyword detector for ultrawork/deep-research/explore modes)
-    hook: keywordDetectorHook,
+    // Register chat.message hook (keyword detection for ultrawork/deep-research/explore)
+    "chat.message": async (
+      input: { sessionID: string; agent?: string },
+      output: { parts: Array<{ type: string; text?: string }>; message: Record<string, unknown> }
+    ) => {
+      await keywordDetectorHook["chat.message"]?.(input, output as never)
+    },
 
     // Handle session events
     event: async (input: { event: Event }) => {

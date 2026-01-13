@@ -3,12 +3,14 @@
  *
  * Detects special keywords in user messages and:
  * 1. Injects mode-specific context into the message
- * 2. Sets message variant to "max" for higher precision
+ * 2. Sets message variant to "max" for higher precision (ultrawork only)
  * 3. Shows toast notification for user feedback
+ *
+ * Uses the "chat.message" hook which fires when user submits a message.
  */
 
 import type { PluginInput } from "@opencode-ai/plugin"
-import { KEYWORD_CONFIGS, type KeywordType, type KeywordConfig } from "./contexts"
+import { KEYWORD_CONFIGS, type KeywordConfig } from "./contexts"
 
 const TOAST_DURATION = 4000
 
@@ -17,7 +19,7 @@ interface MessagePart {
   text?: string
 }
 
-interface HookOutput {
+interface ChatMessageOutput {
   parts: MessagePart[]
   message: {
     variant?: string
@@ -53,8 +55,8 @@ export function createKeywordDetectorHook(ctx: PluginInput) {
 
   return {
     "chat.message": async (
-      input: { sessionID: string; agent: string },
-      output: HookOutput
+      input: { sessionID: string; agent?: string },
+      output: ChatMessageOutput
     ): Promise<void> => {
       const promptText = extractTextFromParts(output.parts)
       const detectedKeywords = detectKeywords(promptText)
@@ -74,7 +76,7 @@ export function createKeywordDetectorHook(ctx: PluginInput) {
         output.message.variant = "max"
       }
 
-      // Inject context into the message
+      // Inject context into the message parts
       output.parts.push({
         type: "text",
         text: primaryKeyword.context,
