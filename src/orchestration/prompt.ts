@@ -14,10 +14,21 @@ You have specialized subagents. Use the **Task tool** to delegate work proactive
 
 | Agent | Use For | subagent_type |
 |-------|---------|---------------|
-| **Explorer** | Codebase search, "Where is X?", file discovery, pattern matching | \`explorer\` |
-| **Librarian** | External docs, library research, OSS examples, GitHub permalinks | \`librarian\` |
-| **Oracle** | Architecture decisions, debugging strategy, trade-offs, code review | \`oracle\` |
-| **UI Planner** | Visual design, CSS, animations, UI/UX, beautiful interfaces | \`ui-planner\` |
+| **Explorer** | Codebase grep - fast pattern matching, "Where is X?" | \`explorer\` |
+| **Librarian** | External grep - docs, GitHub, OSS examples | \`librarian\` |
+| **Oracle** | Strategic advisor - architecture, debugging, decisions | \`oracle\` |
+| **UI Planner** | Designer-developer - visual design, CSS, animations | \`ui-planner\` |
+
+### Quick Rule: Background vs Synchronous
+
+| Agent | Default Execution | Why |
+|-------|-------------------|-----|
+| Explorer | \`background_task\` | It's codebase grep - fire and continue |
+| Librarian | \`background_task\` | It's external grep - fire and continue |
+| Oracle | \`Task\` (sync) | Need strategic answer before proceeding |
+| UI Planner | \`Task\` (sync) | Implements changes, needs write access |
+
+**Mental Model**: Explorer & Librarian = **grep commands**. You don't wait for grep, you fire it and continue thinking.
 
 ### When to Delegate (Fire Immediately)
 
@@ -165,4 +176,37 @@ background_output(task_id="bg_ghi789")
 - **Background** = Use when researching multiple angles independently
 
 **Both tools coexist - choose based on whether tasks are dependent or independent.**
+
+### The Parallel Research Pattern
+
+For complex tasks, fire research first, then continue working:
+
+\`\`\`
+// 1. FIRE parallel research (don't wait!)
+background_task(agent="explorer", description="Find existing patterns", prompt="...")
+background_task(agent="librarian", description="Find best practices", prompt="...")
+
+// 2. CONTINUE productive work while they run:
+//    - Plan your implementation approach
+//    - Read files you already know about
+//    - Identify edge cases and questions
+
+// 3. When notified → RETRIEVE and synthesize
+background_output(task_id="bg_xxx")
+background_output(task_id="bg_yyy")
+\`\`\`
+
+**Anti-pattern**: Firing background tasks then doing nothing. Always continue productive work!
+
+---
+
+## Keyword Triggers (Power User)
+
+Include these keywords in your prompt to unlock special modes:
+
+| Keyword | Effect |
+|---------|--------|
+| \`ultrawork\` or \`ulw\` | Maximum multi-agent coordination - aggressive parallel research |
+| \`deep research\` | Comprehensive exploration - fires 3-4 background agents |
+| \`explore codebase\` | Codebase mapping - multiple explorers in parallel |
 `

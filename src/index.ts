@@ -22,7 +22,8 @@ import { ORCHESTRATION_PROMPT } from "./orchestration/prompt"
 import { loadPluginConfig, type AgentName } from "./config"
 import { createBuiltinMcps } from "./mcp"
 import { BackgroundManager, createBackgroundTools } from "./background"
-import { createAutoUpdateHook } from "./hooks"
+import { createAutoUpdateHook, createKeywordDetectorHook } from "./hooks"
+import { TaskToastManager } from "./features/task-toast"
 
 const ZenoxPlugin: Plugin = async (ctx) => {
   // Load user/project configuration
@@ -30,12 +31,17 @@ const ZenoxPlugin: Plugin = async (ctx) => {
   const disabledAgents = new Set(pluginConfig.disabled_agents ?? [])
   const disabledMcps = pluginConfig.disabled_mcps ?? []
 
-  // Initialize background task manager
+  // Initialize toast manager for background tasks
+  const taskToastManager = new TaskToastManager(ctx.client)
+
+  // Initialize background task manager with toast integration
   const backgroundManager = new BackgroundManager()
+  backgroundManager.setToastManager(taskToastManager)
   const backgroundTools = createBackgroundTools(backgroundManager, ctx.client)
 
-  // Initialize auto-update hook
+  // Initialize hooks
   const autoUpdateHook = createAutoUpdateHook(ctx)
+  const keywordDetectorHook = createKeywordDetectorHook(ctx)
 
   // Helper to apply model override from config
   const applyModelOverride = (
@@ -52,6 +58,9 @@ const ZenoxPlugin: Plugin = async (ctx) => {
   return {
     // Register background task tools
     tool: backgroundTools,
+
+    // Register hooks (keyword detector for ultrawork/deep-research/explore modes)
+    hook: keywordDetectorHook,
 
     // Handle session events
     event: async (input: { event: Event }) => {

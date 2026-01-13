@@ -14,10 +14,16 @@ import type {
   LaunchInput,
   CompletionNotification,
 } from "./types"
+import type { TaskToastManager } from "../features/task-toast"
 
 export class BackgroundManager {
   private tasks = new Map<string, BackgroundTask>()
   private mainSessionID: string | undefined
+  private toastManager: TaskToastManager | undefined
+
+  setToastManager(manager: TaskToastManager): void {
+    this.toastManager = manager
+  }
 
   setMainSession(sessionID: string): void {
     this.mainSessionID = sessionID
@@ -68,6 +74,15 @@ export class BackgroundManager {
 
     this.tasks.set(task.id, task)
 
+    // Show launch toast
+    if (this.toastManager) {
+      this.toastManager.showLaunchToast({
+        id: task.id,
+        description: task.description,
+        agent: task.agent,
+      }).catch(() => {})
+    }
+
     // Fire-and-forget: send prompt without awaiting result
     client.session
       .prompt({
@@ -85,6 +100,11 @@ export class BackgroundManager {
           existingTask.status = "failed"
           existingTask.error = err.message ?? "Unknown error"
           existingTask.completedAt = new Date()
+
+          // Show failure toast
+          if (this.toastManager) {
+            this.toastManager.showFailureToast(task.id, existingTask.error).catch(() => {})
+          }
         }
       })
 
@@ -199,6 +219,11 @@ export class BackgroundManager {
     // Mark task as complete
     task.status = "completed"
     task.completedAt = new Date()
+
+    // Show completion toast
+    if (this.toastManager) {
+      this.toastManager.showCompletionToast(task.id).catch(() => {})
+    }
 
     // Generate notification
     return this.getCompletionStatus()

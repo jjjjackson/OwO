@@ -10,7 +10,6 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/zenox"><img src="https://img.shields.io/npm/v/zenox.svg?style=flat-square" alt="npm version" /></a>
-  <!-- <a href="https://www.npmjs.com/package/zenox"><img src="https://img.shields.io/npm/dm/zenox.svg?style=flat-square" alt="npm downloads" /></a> -->
   <a href="https://github.com/CYBERBOYAYUSH/zenox/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="license" /></a>
 </p>
 
@@ -41,7 +40,7 @@ That's it. Restart OpenCode and the agents are ready.
 
 | Agent | What it does | Default Model |
 |-------|-------------|---------------|
-| **Explorer** | Codebase search, file discovery, pattern matching | `claude-haiku-4-5` |
+| **Explorer** | Codebase grep, file discovery, pattern matching | `claude-haiku-4-5` |
 | **Librarian** | Library research, docs lookup, GitHub examples | `claude-sonnet-4-5` |
 | **Oracle** | Architecture decisions, debugging strategy, code review | `gpt-5.2` |
 | **UI Planner** | Frontend design, CSS, animations, visual polish | `gemini-3-pro-high` |
@@ -64,6 +63,36 @@ You: "Make this dashboard look better"
 → UI Planner redesigns with proper aesthetics
 ```
 
+## Keyword Triggers
+
+Include these magic words in your prompt to unlock special modes:
+
+| Keyword | What it does |
+|---------|--------------|
+| `ultrawork` or `ulw` | Maximum multi-agent coordination — fires parallel background agents, sets max precision |
+| `deep research` | Comprehensive exploration — fires 3-4 background agents (explorer + librarian) |
+| `explore codebase` | Codebase mapping — multiple explorers search in parallel |
+
+### Examples
+
+```
+You: "ultrawork - add authentication to this app"
+→ ⚡ Ultrawork Mode activated
+→ Fires explorer + librarian in parallel
+→ Maximum precision engaged
+
+You: "deep research how this project handles errors"
+→ 🔬 Deep Research Mode activated
+→ Fires multiple explorers + librarians
+→ Waits for comprehensive results before proceeding
+
+You: "explore codebase for payment logic"
+→ 🔍 Explore Mode activated
+→ Multiple explorers search patterns, implementations, tests
+```
+
+You'll see a toast notification when these modes activate.
+
 ## Background Tasks
 
 Need comprehensive research? Fire multiple agents in parallel:
@@ -75,6 +104,15 @@ background_task(agent="librarian", description="JWT best practices", prompt="...
 // Both run simultaneously while you keep working
 // You're notified when all tasks complete
 ```
+
+### Toast Notifications
+
+Zenox shows toast notifications for background task events:
+
+- ⚡ **Task Launched** — Shows task description and agent
+- ✅ **Task Completed** — Shows duration and remaining count
+- 🎉 **All Complete** — Shows summary of all finished tasks
+- ❌ **Task Failed** — Shows error message
 
 ## Configuration
 
@@ -133,7 +171,7 @@ Zenox checks for updates on startup. When a new version drops:
 2. Bun cache is invalidated
 3. Restart to get the update
 
-Pin a version to disable: `"zenox@1.0.3"` in your plugins array.
+Pin a version to disable: `"zenox@1.2.0"` in your plugins array.
 
 ## Credits
 

@@ -1,0 +1,104 @@
+/**
+ * Keyword Detector Hook
+ *
+ * Detects special keywords in user messages and:
+ * 1. Injects mode-specific context into the message
+ * 2. Sets message variant to "max" for higher precision
+ * 3. Shows toast notification for user feedback
+ */
+
+import type { PluginInput } from "@opencode-ai/plugin"
+import { KEYWORD_CONFIGS, type KeywordType, type KeywordConfig } from "./contexts"
+
+const TOAST_DURATION = 4000
+
+interface MessagePart {
+  type: string
+  text?: string
+}
+
+interface HookOutput {
+  parts: MessagePart[]
+  message: {
+    variant?: string
+  }
+}
+
+function extractTextFromParts(parts: MessagePart[]): string {
+  return parts
+    .filter((p) => p.type === "text" && p.text)
+    .map((p) => p.text ?? "")
+    .join(" ")
+}
+
+function removeCodeBlocks(text: string): string {
+  return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`]+`/g, "")
+}
+
+function detectKeywords(text: string): KeywordConfig[] {
+  const cleanText = removeCodeBlocks(text)
+  const detected: KeywordConfig[] = []
+
+  for (const config of KEYWORD_CONFIGS) {
+    if (config.pattern.test(cleanText)) {
+      detected.push(config)
+    }
+  }
+
+  return detected
+}
+
+export function createKeywordDetectorHook(ctx: PluginInput) {
+  const detectedSessions = new Set<string>()
+
+  return {
+    "chat.message": async (
+      input: { sessionID: string; agent: string },
+      output: HookOutput
+    ): Promise<void> => {
+      const promptText = extractTextFromParts(output.parts)
+      const detectedKeywords = detectKeywords(promptText)
+
+      if (detectedKeywords.length === 0) return
+
+      // Prevent duplicate detection in same session
+      const sessionKey = `${input.sessionID}-${detectedKeywords.map((k) => k.type).join("-")}`
+      if (detectedSessions.has(sessionKey)) return
+      detectedSessions.add(sessionKey)
+
+      // Get highest priority keyword (ultrawork > deep-research > explore)
+      const primaryKeyword = detectedKeywords[0]
+
+      // Set message variant to "max" for higher precision (ultrawork only)
+      if (primaryKeyword.type === "ultrawork") {
+        output.message.variant = "max"
+      }
+
+      // Inject context into the message
+      output.parts.push({
+        type: "text",
+        text: primaryKeyword.context,
+      })
+
+      // Show toast notification
+      await ctx.client.tui
+        .showToast({
+          body: {
+            title: primaryKeyword.toast.title,
+            message: primaryKeyword.toast.message,
+            variant: "success",
+            duration: TOAST_DURATION,
+          },
+        })
+        .catch(() => {})
+
+      // Clean up old session keys periodically (prevent memory leak)
+      if (detectedSessions.size > 100) {
+        const entries = [...detectedSessions]
+        entries.slice(0, 50).forEach((key) => detectedSessions.delete(key))
+      }
+    },
+  }
+}
+
+export { KEYWORD_CONFIGS, type KeywordType, type KeywordConfig } from "./contexts"
