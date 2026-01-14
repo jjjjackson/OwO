@@ -1,0 +1,164 @@
+/**
+ * Todo Continuation Enforcer Hook
+ *
+ * Automatically reminds the agent to continue working when:
+ * - Session goes idle (session.idle event)
+ * - There are incomplete todos (pending or in_progress)
+ *
+ * Features:
+ * - Skips child sessions (background tasks)
+ * - Cooldown to prevent spam (10 seconds between reminders)
+ * - Shows toast notification when enforcing
+ *
+ * Inspired by oh-my-opencode's todo-continuation-enforcer
+ */
+
+import type { PluginInput } from "@opencode-ai/plugin"
+import type { Event, Todo, Session } from "@opencode-ai/sdk"
+
+const COOLDOWN_MS = 10_000 // 10 seconds between reminders
+const TOAST_DURATION = 3000
+
+const CONTINUATION_PROMPT = `[TODO CONTINUATION REMINDER]
+
+You have incomplete tasks in your todo list. Continue working on them.
+
+Rules:
+- Proceed without asking for permission
+- Mark each task complete when finished
+- Update todo status as you work
+- Do not stop until all tasks are done or blocked`
+
+interface SessionState {
+  lastEnforcedAt: number
+  enforceCount: number
+}
+
+export function createTodoEnforcerHook(ctx: PluginInput) {
+  const sessionStates = new Map<string, SessionState>()
+
+  // Cleanup old session states periodically
+  const cleanupOldStates = () => {
+    const now = Date.now()
+    const maxAge = 30 * 60 * 1000 // 30 minutes
+    for (const [sessionID, state] of sessionStates) {
+      if (now - state.lastEnforcedAt > maxAge) {
+        sessionStates.delete(sessionID)
+      }
+    }
+  }
+
+  return {
+    event: async ({ event }: { event: Event }) => {
+      if (event.type !== "session.idle") return
+
+      const props = event.properties as { sessionID?: string }
+      const sessionID = props?.sessionID
+      if (!sessionID) return
+
+      // Get or create session state
+      let state = sessionStates.get(sessionID)
+      if (!state) {
+        state = { lastEnforcedAt: 0, enforceCount: 0 }
+        sessionStates.set(sessionID, state)
+      }
+
+      // Check cooldown
+      const now = Date.now()
+      if (now - state.lastEnforcedAt < COOLDOWN_MS) {
+        return
+      }
+
+      // Skip child sessions (background tasks)
+      try {
+        const sessionResult = await ctx.client.session.get({
+          path: { id: sessionID },
+        })
+        const session = sessionResult.data as Session | undefined
+        if (session?.parentID) {
+          return // It's a child session, skip
+        }
+      } catch {
+        return // Session not found or error, skip
+      }
+
+      // Get todos for this session
+      let todos: Todo[] = []
+      try {
+        const todosResult = await ctx.client.session.todo({
+          path: { id: sessionID },
+        })
+        todos = (todosResult.data ?? []) as Todo[]
+      } catch {
+        return // Failed to get todos, skip
+      }
+
+      if (todos.length === 0) {
+        return // No todos, nothing to enforce
+      }
+
+      // Filter incomplete todos
+      const incomplete = todos.filter(
+        (t) => t.status === "pending" || t.status === "in_progress"
+      )
+
+      if (incomplete.length === 0) {
+        return // All todos complete, nothing to enforce
+      }
+
+      // Update state
+      state.lastEnforcedAt = now
+      state.enforceCount++
+
+      // Build todo list for prompt
+      const todoList = incomplete
+        .map((t) => {
+          const priority = t.priority === "high" ? "!" : ""
+          return `- [${t.status}]${priority} ${t.content}`
+        })
+        .join("\n")
+
+      const completedCount = todos.length - incomplete.length
+      const statusLine = `[Status: ${completedCount}/${todos.length} completed, ${incomplete.length} remaining]`
+
+      const prompt = `${CONTINUATION_PROMPT}
+
+Current incomplete tasks:
+${todoList}
+
+${statusLine}`
+
+      // Send continuation prompt
+      try {
+        await ctx.client.session.prompt({
+          path: { id: sessionID },
+          body: {
+            noReply: false, // Trigger agent response
+            parts: [{ type: "text", text: prompt }],
+          },
+        })
+
+        // Show toast notification
+        await ctx.client.tui
+          .showToast({
+            body: {
+              title: "📋 Todo Reminder",
+              message: `${incomplete.length} task(s) remaining`,
+              variant: "info",
+              duration: TOAST_DURATION,
+            },
+          })
+          .catch(() => {})
+      } catch {
+        // Silently ignore errors
+      }
+
+      // Periodic cleanup
+      if (sessionStates.size > 50) {
+        cleanupOldStates()
+      }
+    },
+  }
+}
+
+export type { SessionState }

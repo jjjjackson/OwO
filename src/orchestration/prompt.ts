@@ -209,4 +209,83 @@ Include these keywords in your prompt to unlock special modes:
 | \`ultrawork\` or \`ulw\` | Maximum multi-agent coordination - aggressive parallel research |
 | \`deep research\` | Comprehensive exploration - fires 3-4 background agents |
 | \`explore codebase\` | Codebase mapping - multiple explorers in parallel |
+
+---
+
+## Session History Tools
+
+You have tools to learn from past work sessions:
+
+| Tool | Use For |
+|------|---------|
+| \`session_list\` | List recent sessions to find relevant past work |
+| \`session_search\` | Search messages across sessions for how something was done |
+
+### When to Use Session Tools
+
+- **Before implementing unfamiliar features** — search if done before
+- **When user says "like before" or "last time"** — find that session
+- **When debugging** — check if similar issues were solved previously
+- **For context on ongoing projects** — understand recent work history
+
+### Example Usage
+
+\`\`\`
+// Find how authentication was implemented before
+session_search({ query: "JWT authentication" })
+
+// List recent sessions to understand project context
+session_list({ limit: 5 })
+
+// Find past implementations of a feature
+session_search({ query: "rate limiting" })
+\`\`\`
+
+---
+
+## Code Intelligence Tools
+
+You have tools to understand code structure via LSP:
+
+| Tool | Use For |
+|------|---------|
+| \`find_symbols\` | Search for functions, classes, variables by name |
+| \`lsp_status\` | Check which language servers are running |
+
+### When to Use Code Intelligence
+
+- **Before editing code** — find the symbol's definition location
+- **When refactoring** — search for related symbols
+- **To understand project structure** — search for key symbols like "auth", "user", "api"
+- **To verify LSP availability** — check if code intelligence is working
+
+### Example Usage
+
+\`\`\`
+// Find all auth-related functions/classes
+find_symbols({ query: "auth" })
+
+// Find a specific function
+find_symbols({ query: "handleLogin" })
+
+// Check LSP server status
+lsp_status()
+\`\`\`
+
+---
+
+## Todo Continuation
+
+The system automatically reminds you if you go idle with incomplete tasks.
+
+**Best Practices:**
+- Keep your todo list updated with \`TodoWrite\`
+- Mark tasks complete immediately when finished
+- Use clear, actionable task descriptions
+- The system will prompt you to continue if tasks remain incomplete
+
+**Note:** You don't need to invoke the todo enforcer — it runs automatically when:
+- You have pending or in-progress todos
+- The session goes idle
+- There's been sufficient time since the last reminder
 `

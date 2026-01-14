@@ -22,8 +22,14 @@ import { ORCHESTRATION_PROMPT } from "./orchestration/prompt"
 import { loadPluginConfig, type AgentName } from "./config"
 import { createBuiltinMcps } from "./mcp"
 import { BackgroundManager, createBackgroundTools } from "./background"
-import { createAutoUpdateHook, createKeywordDetectorHook } from "./hooks"
+import {
+  createAutoUpdateHook,
+  createKeywordDetectorHook,
+  createTodoEnforcerHook,
+} from "./hooks"
 import { TaskToastManager } from "./features/task-toast"
+import { createSessionTools } from "./tools/session"
+import { createCodeIntelligenceTools } from "./tools/code-intelligence"
 
 const ZenoxPlugin: Plugin = async (ctx) => {
   // Load user/project configuration
@@ -42,6 +48,11 @@ const ZenoxPlugin: Plugin = async (ctx) => {
   // Initialize hooks
   const autoUpdateHook = createAutoUpdateHook(ctx)
   const keywordDetectorHook = createKeywordDetectorHook(ctx)
+  const todoEnforcerHook = createTodoEnforcerHook(ctx)
+
+  // Initialize session and code intelligence tools
+  const sessionTools = createSessionTools(ctx.client)
+  const codeIntelligenceTools = createCodeIntelligenceTools(ctx.client)
 
   // Helper to apply model override from config
   const applyModelOverride = (
@@ -56,8 +67,12 @@ const ZenoxPlugin: Plugin = async (ctx) => {
   }
 
   return {
-    // Register background task tools
-    tool: backgroundTools,
+    // Register all tools (background, session, code intelligence)
+    tool: {
+      ...backgroundTools,
+      ...sessionTools,
+      ...codeIntelligenceTools,
+    },
 
     // Register chat.message hook (keyword detection for ultrawork/deep-research/explore)
     "chat.message": async (
@@ -90,6 +105,7 @@ const ZenoxPlugin: Plugin = async (ctx) => {
         const sessionID = props?.sessionID
         if (!sessionID) return
 
+        // Handle background task completion
         const notification = backgroundManager.handleSessionIdle(sessionID)
 
         // If a background task completed, notify the main session
@@ -108,7 +124,12 @@ const ZenoxPlugin: Plugin = async (ctx) => {
               },
             })
           }
+          // Don't run todo enforcer for background task completions
+          return
         }
+
+        // Run todo enforcer for main session idle (not background tasks)
+        await todoEnforcerHook.event(input)
       }
     },
 

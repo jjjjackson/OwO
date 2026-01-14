@@ -17,6 +17,16 @@
 
 Zenox supercharges [OpenCode](https://opencode.ai) with specialized AI agents that handle different aspects of development. Instead of one agent doing everything, you get a team of experts — each optimized for their domain.
 
+## Features
+
+- **4 Specialized Agents** — Explorer, Librarian, Oracle, UI Planner
+- **Background Tasks** — Fire multiple agents in parallel
+- **Keyword Triggers** — `ultrawork`, `deep research`, `explore codebase`
+- **Session History** — Query past sessions to learn from previous work
+- **Code Intelligence** — Search symbols via LSP
+- **Todo Continuation** — Auto-reminds when tasks are incomplete
+- **Auto-Updates** — Toast notification when new version available
+
 ## Why Zenox?
 
 Most AI coding assistants use a single model for everything. Zenox takes a different approach:
@@ -113,6 +123,46 @@ Zenox shows toast notifications for background task events:
 - ✅ **Task Completed** — Shows duration and remaining count
 - 🎉 **All Complete** — Shows summary of all finished tasks
 - ❌ **Task Failed** — Shows error message
+
+## Session History
+
+Query past sessions to learn from previous work:
+
+| Tool | What it does |
+|------|--------------|
+| `session_list` | List recent sessions to find relevant past work |
+| `session_search` | Search messages across sessions for how something was done |
+
+```
+You: "How did we implement auth last time?"
+→ session_search({ query: "authentication" })
+→ Finds excerpts from past sessions where auth was discussed
+```
+
+## Code Intelligence
+
+Search for symbols via LSP (Language Server Protocol):
+
+| Tool | What it does |
+|------|--------------|
+| `find_symbols` | Search for functions, classes, variables by name |
+| `lsp_status` | Check which language servers are running |
+
+```
+You: "Find where handleLogin is defined"
+→ find_symbols({ query: "handleLogin" })
+→ Returns: Function in src/auth/handlers.ts, line 42
+```
+
+## Todo Continuation
+
+Zenox automatically reminds you to continue working when:
+
+- You have incomplete tasks in your todo list
+- The session goes idle
+- There's been enough time since the last reminder (10 second cooldown)
+
+This keeps you on track without manual intervention. The agent will be prompted to continue until all todos are complete or blocked.
 
 ## Configuration
 
