@@ -9,8 +9,7 @@
  * - Skips child sessions (background tasks)
  * - Cooldown to prevent spam (10 seconds between reminders)
  * - Shows toast notification when enforcing
- *
- * Inspired by oh-my-opencode's todo-continuation-enforcer
+ * - Mode-aware: preserves Plan/Build agent context
  */
 
 import type { PluginInput } from "@opencode-ai/plugin"
@@ -18,6 +17,9 @@ import type { Event, Todo, Session } from "@opencode-ai/sdk"
 
 const COOLDOWN_MS = 10_000 // 10 seconds between reminders
 const TOAST_DURATION = 3000
+
+// Agents to skip (Plan mode should not auto-continue with file edits)
+const SKIP_AGENTS = ["plan"]
 
 const CONTINUATION_PROMPT = `[TODO CONTINUATION REMINDER]
 
@@ -34,10 +36,15 @@ interface SessionState {
   enforceCount: number
 }
 
+// Type for message info from the API (agent field is what we need)
+interface MessageInfo {
+  agent?: string
+  role?: string
+}
+
 export function createTodoEnforcerHook(ctx: PluginInput) {
   const sessionStates = new Map<string, SessionState>()
 
-  // Cleanup old session states periodically
   const cleanupOldStates = () => {
     const now = Date.now()
     const maxAge = 30 * 60 * 1000 // 30 minutes
@@ -69,17 +76,37 @@ export function createTodoEnforcerHook(ctx: PluginInput) {
         return
       }
 
-      // Skip child sessions (background tasks)
+      // Skip child sessions and detect current agent
+      let agent: string | undefined
       try {
         const sessionResult = await ctx.client.session.get({
           path: { id: sessionID },
         })
         const session = sessionResult.data as Session | undefined
         if (session?.parentID) {
-          return // It's a child session, skip
+          return // Child session, skip
+        }
+
+        // Get agent from last message (API returns { info: { agent, role, ... }, parts: [...] })
+        const msgs = await ctx.client.session.messages({
+          path: { id: sessionID },
+          query: { limit: 5 },
+        })
+        const messages = (msgs.data ?? []) as Array<{ info?: MessageInfo }>
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const info = messages[i]?.info
+          if (info?.agent) {
+            agent = info.agent
+            break
+          }
         }
       } catch {
         return // Session not found or error, skip
+      }
+
+      // Skip if agent is in skip list (e.g., plan mode)
+      if (agent && SKIP_AGENTS.includes(agent)) {
+        return
       }
 
       // Get todos for this session
@@ -103,7 +130,7 @@ export function createTodoEnforcerHook(ctx: PluginInput) {
       )
 
       if (incomplete.length === 0) {
-        return // All todos complete, nothing to enforce
+        return // All todos complete
       }
 
       // Update state
@@ -128,30 +155,45 @@ ${todoList}
 
 ${statusLine}`
 
-      // Send continuation prompt
-      try {
+      // Send continuation prompt with agent preservation
+      const sendPrompt = async (omitAgent = false) => {
         await ctx.client.session.prompt({
           path: { id: sessionID },
           body: {
-            noReply: false, // Trigger agent response
+            noReply: false,
+            ...(omitAgent || !agent ? {} : { agent }),
             parts: [{ type: "text", text: prompt }],
           },
         })
-
-        // Show toast notification
-        await ctx.client.tui
-          .showToast({
-            body: {
-              title: "📋 Todo Reminder",
-              message: `${incomplete.length} task(s) remaining`,
-              variant: "info",
-              duration: TOAST_DURATION,
-            },
-          })
-          .catch(() => {})
-      } catch {
-        // Silently ignore errors
       }
+
+      try {
+        await sendPrompt()
+      } catch (err) {
+        // Retry without agent if we hit undefined agent error
+        const errorMsg = err instanceof Error ? err.message : String(err)
+        if (errorMsg.includes("agent") || errorMsg.includes("undefined")) {
+          try {
+            await sendPrompt(true)
+          } catch {
+            return
+          }
+        } else {
+          return
+        }
+      }
+
+      // Show toast notification
+      await ctx.client.tui
+        .showToast({
+          body: {
+            title: "📋 Todo Reminder",
+            message: `${incomplete.length} task(s) remaining`,
+            variant: "info",
+            duration: TOAST_DURATION,
+          },
+        })
+        .catch(() => {})
 
       // Periodic cleanup
       if (sessionStates.size > 50) {
