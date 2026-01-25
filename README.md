@@ -17,15 +17,18 @@ OwO supercharges [OpenCode](https://opencode.ai) with specialized AI agents that
 
 ## Why OwO?
 
-a
-OwO takes the more lightweight sub-aget and mutimodle approach from [zenox][https://github.com/CYBERBOYAYUSH/zenox] This lets you configure each agent to a model more tuned for the task:
+OwO takes the more lightweight sub-agent and multi-model approach from [zenox](https://github.com/CYBERBOYAYUSH/zenox). This lets you configure each agent to a model more tuned for the task.
 
-- **Explorer** finds code fast — optimized for codebase search with a lightweight model
+For example, you **can** configure orchestration to have something like:
+
+- **Explore** finds code fast — optimized for codebase search with a lightweight model (built into OpenCode, but you can use the `prompt-injector` to enhance it)
 - **Librarian** digs deep into docs — researches libraries, finds GitHub examples, citations included
 - **Oracle** thinks strategically — architecture decisions, debugging, technical trade-offs
 - **UI Planner** designs beautifully — CSS, animations, interfaces that don't look AI-generated
 
-The main agent automatically delegates to specialists when needed. You don't have to manage them.
+You can set your main agent to automatically delegate to specialists when needed. Or — better yet — keep the **build** agent lean and create an orchestrator agent to coordinate!
+
+See [`packages/example`](packages/example) for complete example configurations.
 
 ## Quick Start
 
@@ -35,14 +38,22 @@ bunx owo install
 
 That's it. Restart OpenCode and the agents are ready.
 
-## Agents
+### Setting Up Delegation
 
-| Agent          | What it does                                            | Default Model          |
-| -------------- | ------------------------------------------------------- | ---------------------- |
-| **Explorer**   | Codebase grep, file discovery, pattern matching         | `claude-haiku-4-5`     |
-| **Librarian**  | Library research, docs lookup, GitHub examples          | `claude-sonnet-4-5`    |
-| **Oracle**     | Architecture decisions, debugging strategy, code review | `openai/gpt-5.2-codex` |
-| **UI Planner** | Frontend design, CSS, animations, visual polish         | `claude-opus-4-5`      |
+To enable agent delegation (where one agent coordinates others), you need:
+
+1. **The orchestration plugin** — Add [`@owo/orchestration`](packages/orchestration/src/index.ts) to your plugins
+
+2. **An orchestrator agent** — Either:
+   - Create a custom agent with orchestration instructions in its prompt (see [`packages/example/agent/owO.md`](packages/example/agent/owO.md) for an example)
+   - Or use the [`@owo/prompt-injector`](packages/prompt-injector/src/index.ts) plugin to inject orchestration context into existing agents like `build` or `plan`
+
+### Example Configurations
+
+Check out the example configs in [`packages/example`](packages/example):
+
+- **[`owo.example.json`](packages/example/owo.example.json)** — Full OwO config with keywords, prompts, orchestration, and tool settings
+- **[`opencode.example.json`](packages/example/opencode.example.json)** — OpenCode config showing how to wire up plugins and configure multiple agents with different models and permissions
 
 ### How delegation works
 
@@ -113,36 +124,6 @@ OwO shows toast notifications for background task events:
 - 🎉 **All Complete** — Shows summary of all finished tasks
 - ❌ **Task Failed** — Shows error message
 
-## Session History
-
-Query past sessions to learn from previous work:
-
-| Tool             | What it does                                               |
-| ---------------- | ---------------------------------------------------------- |
-| `session_list`   | List recent sessions to find relevant past work            |
-| `session_search` | Search messages across sessions for how something was done |
-
-```
-You: "How did we implement auth last time?"
-→ session_search({ query: "authentication" })
-→ Finds excerpts from past sessions where auth was discussed
-```
-
-## Code Intelligence
-
-Search for symbols via LSP (Language Server Protocol):
-
-| Tool           | What it does                                     |
-| -------------- | ------------------------------------------------ |
-| `find_symbols` | Search for functions, classes, variables by name |
-| `lsp_status`   | Check which language servers are running         |
-
-```
-You: "Find where handleLogin is defined"
-→ find_symbols({ query: "handleLogin" })
-→ Returns: Function in src/auth/handlers.ts, line 42
-```
-
 ## Todo Continuation
 
 OwO automatically reminds you to continue working when:
@@ -155,18 +136,15 @@ This keeps you on track without manual intervention. The agent will be prompted 
 
 ## Configuration
 
-### Custom Models
+### Custom Models and Agents
 
-During installation, choose "Customize models" to pick your own. Or run later:
+This all has to be done manually in `owo.json`. You may wish to check [example](packages/example/owo.example.json) for this
 
-```bash
-bunx owo config
-```
-
-Config saves to `~/.config/opencode/owo.json`:
+Config is setup in `~/.config/opencode/owo.json`:
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/RawToast/OwO/refs/heads/master/packages/config/schema.json",
   "agents": {
     "explorer": { "model": "anthropic/claude-sonnet-4.5" },
     "oracle": { "model": "openai/gpt-5.2" }
@@ -307,21 +285,11 @@ bunx owo config           # Reconfigure models anytime
 bunx owo --help           # Show all commands
 ```
 
-## Auto-Update
-
-OwO checks for updates on startup. When a new version drops:
-
-1. You see a toast notification
-2. Bun cache is invalidated
-3. Restart to get the update
-
-Pin a version to disable: `"owo@1.4.1"` in your plugins array.
-
 ## Credits
 
 - [OpenCode](https://opencode.ai) — The CLI this extends
 - [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) — Inspiration for orchestration patterns
-- [zenox][https://github.com/CYBERBOYAYUSH/zenox] - Originally forked form this great setup
+- [zenox](https://github.com/CYBERBOYAYUSH/zenox) - Originally forked form this great setup
 
 ## License
 
