@@ -2,8 +2,6 @@
 
 ## Agent orchestration for OpenCode
 
----
-
 OwO supercharges [OpenCode](https://opencode.ai) with specialized AI agents that handle different aspects of development. Instead of one agent doing everything, you get a team of experts — each optimized for their domain.
 
 ## Features
