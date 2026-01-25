@@ -1,0 +1,20 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "make": {
+      "dependsOn": ["^make"],
+      "outputs": ["dist/**"]
+    },
+    "make:local": {
+      "dependsOn": ["^make:local"],
+      "outputs": ["dist/**"]
+    },
+    "compile": {
+      "dependsOn": ["^compile"],
+      "outputs": ["dist/**/*.d.ts"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}
