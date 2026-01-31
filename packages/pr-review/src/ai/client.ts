@@ -18,6 +18,7 @@ export async function prompt(
   options?: {
     sessionId?: string
     model?: { providerID: string; modelID: string }
+    temperature?: number
   },
 ): Promise<{ sessionId: string; response: string }> {
   // Create or reuse session
@@ -32,6 +33,7 @@ export async function prompt(
     body: {
       parts: [{ type: "text", text: message }],
       ...(options?.model && { model: options.model }),
+      ...(options?.temperature !== undefined && { temperature: options.temperature }),
     },
   })
 

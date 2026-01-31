@@ -63,7 +63,10 @@ export async function verifyAndSynthesize(
     let response: string
     try {
       const result = await Promise.race([
-        prompt(ai, overviewPrompt, { model: modelConfig }),
+        prompt(ai, overviewPrompt, {
+          model: modelConfig,
+          temperature: verifierConfig.temperature,
+        }),
         timeoutPromise,
       ])
       response = result.response

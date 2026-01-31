@@ -247,7 +247,10 @@ export async function checkResolutions(
 
   console.log(`[pr-review] Checking resolution of ${input.oldComments.length} comments...`)
 
-  const { response } = await prompt(ai, promptText, { model: modelConfig })
+  const { response } = await prompt(ai, promptText, {
+    model: modelConfig,
+    temperature: config.temperature,
+  })
   const output = parseResolutionResponse(response)
 
   // Map results back to comment IDs if needed (when response used path/line)

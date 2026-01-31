@@ -78,7 +78,10 @@ async function runReviewerInternal(
       }
     : undefined
 
-  const { response } = await prompt(ai, fullPrompt, { model: modelConfig })
+  const { response } = await prompt(ai, fullPrompt, {
+    model: modelConfig,
+    temperature: reviewer.temperature,
+  })
 
   return parseReviewerResponse(response, reviewer.name)
 }

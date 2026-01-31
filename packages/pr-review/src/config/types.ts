@@ -16,6 +16,14 @@ export const ReviewerConfigSchema = z.object({
     )
     .optional()
     .describe("Model override for this reviewer"),
+  temperature: z
+    .number()
+    .min(0)
+    .max(2)
+    .optional()
+    .describe(
+      "Temperature for sampling (0=deterministic, 2=creative). Recommended: 0.1 for reviews",
+    ),
   enabled: z.boolean().default(true),
 })
 
@@ -37,6 +45,14 @@ export const VerifierConfigSchema = z.object({
     .string()
     .regex(/^[^/]+\/[^/]+$/, "Model must be in 'provider/model' format")
     .optional(),
+  temperature: z
+    .number()
+    .min(0)
+    .max(2)
+    .optional()
+    .describe(
+      "Temperature for sampling (0=deterministic, 2=creative). Recommended: 0.1 for reviews",
+    ),
   enabled: z.boolean().default(true),
   level: SeverityLevelSchema.optional()
     .default("info")
@@ -62,6 +78,14 @@ export const ResolutionConfigSchema = z.object({
     .regex(/^[^/]+\/[^/]+$/, "Model must be in 'provider/model' format")
     .optional()
     .describe("Model for resolution agent (recommend cheap/fast like Haiku)"),
+  temperature: z
+    .number()
+    .min(0)
+    .max(2)
+    .optional()
+    .describe(
+      "Temperature for sampling (0=deterministic, 2=creative). Recommended: 0.1 for reviews",
+    ),
   prompt: z.string().optional().describe("Custom resolution prompt"),
   promptFile: z.string().optional().describe("Path to custom prompt file"),
 })

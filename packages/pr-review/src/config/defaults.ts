@@ -3,6 +3,9 @@
  * Extracted to avoid duplication
  */
 
+/** Recommended temperature for deterministic code review */
+export const DEFAULT_REVIEW_TEMPERATURE = 0.1
+
 export const DEFAULT_QUALITY_PROMPT = `You are a code quality reviewer. Focus on:
 - Code quality and best practices
 - Potential bugs and edge cases
