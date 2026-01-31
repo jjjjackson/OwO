@@ -65,6 +65,8 @@ Before formatting, verify each comment:
 - Is the review flagging issues that already exist in the codebase (not introduced by this PR)?
 - Are the line numbers/ranges and file paths accurate?
 - Is this a significant issue worth flagging, or just a minor nitpick/suggestion?
+- Are any of the comments just suggestions, minor nitpicks, formatting, or not significant?
+- Are any of the comments duplicates of other comments?
 
 Track which comment IDs are VALID (should be posted as inline comments).
 Discard comments that are incorrect, unfounded, or too minor to warrant inline feedback.
