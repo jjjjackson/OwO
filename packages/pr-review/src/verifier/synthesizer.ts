@@ -51,7 +51,7 @@ export async function verifyAndSynthesize(
       : undefined
 
     // Add timeout to prevent hanging on slow AI responses
-    const VERIFIER_TIMEOUT_MS = 60_000 // 60 seconds
+    const VERIFIER_TIMEOUT_MS = 180_000 // 180 seconds
     let timerId: ReturnType<typeof setTimeout>
     const timeoutPromise = new Promise<never>((_, reject) => {
       timerId = setTimeout(

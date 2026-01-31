@@ -61,7 +61,7 @@ Before formatting, verify each reviewer's claims:
 - Are the code review suggestions and comments correct?
 - Double check any claims using documentation or web search when available
 - Is the review flagging issues that already exist in the codebase (not introduced by this PR)?
-- Are the line numbers and file paths accurate?
+- Are the line numbers/ranges and file paths accurate?
 - Remove any recommendations, minor nitpicks, or suggestions that are not significant
 - Discard any reviewer claims that are incorrect or unfounded
 
@@ -178,7 +178,9 @@ IMPORTANT:
 - Generate diagrams that actually reflect the changes, not generic placeholders
 - The Changes table MUST include a "Reason" column explaining WHY each file changed
 - Remove any "AI character" flair like excessive emojis or overly enthusiastic language
-- Be concise but thorough`
+- Be concise but thorough
+- YOU MUST follow the provided template
+- If the reviewers did not provide a diagram, you MUST generate one using mermaid`
 
 export const DEFAULT_RESOLUTION_PROMPT = `You are a resolution checking agent. Your job is to determine whether previous review comments have been addressed.
 
