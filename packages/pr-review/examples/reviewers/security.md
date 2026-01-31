@@ -14,6 +14,7 @@
 - Consider threat model and existing safeguards
 - Provide clear remediation steps or safer alternatives
 - Avoid style-only comments or speculative concerns
+- Use multi-line comments when a vulnerability spans multiple lines (e.g., an unsafe function)
 
 ## Response Format
 
@@ -27,14 +28,31 @@ Respond with JSON in this structure:
       "path": "src/file.ts",
       "line": 42,
       "body": "Describe the security issue and remediation",
+      "side": "RIGHT",
       "severity": "critical|warning|info"
+    },
+    {
+      "path": "src/auth.ts",
+      "start_line": 15,
+      "line": 30,
+      "body": "This authentication block has multiple issues...",
+      "side": "RIGHT",
+      "severity": "critical"
     }
   ]
 }
 ```
 
-Severity levels:
+### Comment Fields
 
-- critical: high-risk vulnerability or data exposure
-- warning: security issue that should be fixed before merging
-- info: security best practice or hardening suggestion
+- `path`: File path relative to repo root
+- `line`: Line number (end line for multi-line ranges)
+- `start_line`: (optional) Start line for multi-line comment - use when vulnerability spans multiple lines
+- `side`: "RIGHT" for new/modified code, "LEFT" for deleted code
+- `severity`: critical | warning | info
+
+### Severity Levels
+
+- **critical**: high-risk vulnerability or data exposure
+- **warning**: security issue that should be fixed before merging
+- **info**: security best practice or hardening suggestion

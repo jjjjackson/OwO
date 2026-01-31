@@ -13,6 +13,7 @@
 - Ignore style-only or formatting-only concerns
 - Be specific: reference the exact file and line when possible
 - Provide clear reasoning and, when helpful, a concrete fix
+- Use multi-line comments when feedback applies to a block of code (function, loop, related lines)
 
 ## Response Format
 
@@ -28,13 +29,29 @@ Respond with JSON in this structure:
       "body": "Describe the issue and recommended fix",
       "side": "RIGHT",
       "severity": "critical|warning|info"
+    },
+    {
+      "path": "src/file.ts",
+      "start_line": 10,
+      "line": 25,
+      "body": "This entire block needs refactoring because...",
+      "side": "RIGHT",
+      "severity": "warning"
     }
   ]
 }
 ```
 
-Severity levels:
+### Comment Fields
 
-- critical: correctness or safety issue that should block merging
-- warning: important issue that should be fixed before merging
-- info: suggestion or improvement that is non-blocking
+- `path`: File path relative to repo root
+- `line`: Line number (end line for multi-line ranges)
+- `start_line`: (optional) Start line for multi-line comment - use when feedback applies to a code block
+- `side`: "RIGHT" for new/modified code, "LEFT" for deleted code
+- `severity`: critical | warning | info
+
+### Severity Levels
+
+- **critical**: correctness or safety issue that should block merging
+- **warning**: important issue that should be fixed before merging
+- **info**: suggestion or improvement that is non-blocking
