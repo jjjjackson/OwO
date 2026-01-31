@@ -4,6 +4,8 @@ import {
   CodeReviewConfigSchema,
   ReviewVerifyConfigSchema,
   ReviewOutputConfigSchema,
+  ReviewerToolsSchema,
+  DEFAULT_REVIEWER_TOOLS,
 } from "../src/schema"
 
 describe("ReviewerConfigSchema", () => {
@@ -41,6 +43,21 @@ describe("ReviewerConfigSchema", () => {
   test("rejects reviewer without agent", () => {
     const input = { focus: "security" }
     expect(() => ReviewerConfigSchema.parse(input)).toThrow()
+  })
+
+  test("accepts reviewer with tools config", () => {
+    const input = {
+      agent: "oracle",
+      tools: { read: true, grep: true, bash: false },
+    }
+    const result = ReviewerConfigSchema.parse(input)
+    expect(result.tools).toEqual({ read: true, grep: true, bash: false })
+  })
+
+  test("accepts reviewer with empty tools config", () => {
+    const input = { agent: "oracle", tools: {} }
+    const result = ReviewerConfigSchema.parse(input)
+    expect(result.tools).toEqual({})
   })
 })
 
@@ -133,6 +150,11 @@ describe("ReviewVerifyConfigSchema", () => {
     const result = ReviewVerifyConfigSchema.parse({ guidance: [{ file: "guide.md" }] })
     expect(result.guidance).toEqual([{ file: "guide.md" }])
   })
+
+  test("accepts tools config", () => {
+    const result = ReviewVerifyConfigSchema.parse({ tools: { read: true, lsp: true } })
+    expect(result.tools).toEqual({ read: true, lsp: true })
+  })
 })
 
 describe("ReviewOutputConfigSchema", () => {
@@ -144,5 +166,49 @@ describe("ReviewOutputConfigSchema", () => {
   test("accepts template as array with file reference", () => {
     const result = ReviewOutputConfigSchema.parse({ template: [{ file: "template.md" }] })
     expect(result.template).toEqual([{ file: "template.md" }])
+  })
+})
+
+describe("ReviewerToolsSchema", () => {
+  test("accepts valid tools record", () => {
+    const input = { read: true, grep: true, edit: false }
+    const result = ReviewerToolsSchema.parse(input)
+    expect(result).toEqual({ read: true, grep: true, edit: false })
+  })
+
+  test("accepts empty object", () => {
+    const result = ReviewerToolsSchema.parse({})
+    expect(result).toEqual({})
+  })
+
+  test("accepts undefined", () => {
+    const result = ReviewerToolsSchema.parse(undefined)
+    expect(result).toBeUndefined()
+  })
+})
+
+describe("DEFAULT_REVIEWER_TOOLS", () => {
+  test("has read enabled", () => {
+    expect(DEFAULT_REVIEWER_TOOLS.read).toBe(true)
+  })
+
+  test("has grep enabled", () => {
+    expect(DEFAULT_REVIEWER_TOOLS.grep).toBe(true)
+  })
+
+  test("has glob enabled", () => {
+    expect(DEFAULT_REVIEWER_TOOLS.glob).toBe(true)
+  })
+
+  test("has lsp enabled", () => {
+    expect(DEFAULT_REVIEWER_TOOLS.lsp).toBe(true)
+  })
+
+  test("does not have edit enabled", () => {
+    expect(DEFAULT_REVIEWER_TOOLS.edit).toBeUndefined()
+  })
+
+  test("does not have bash enabled", () => {
+    expect(DEFAULT_REVIEWER_TOOLS.bash).toBeUndefined()
   })
 })

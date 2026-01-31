@@ -26,6 +26,10 @@ inputs:
     description: "OpenAI API key (for openai/* models)"
     required: false
     default: ""
+  context7_api_key:
+    description: "Context7 API key for library documentation lookup (optional but recommended)"
+    required: false
+    default: ""
 
 runs:
   using: "composite"

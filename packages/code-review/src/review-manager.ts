@@ -5,7 +5,7 @@
  */
 
 import type { OpencodeClient } from "@opencode-ai/sdk"
-import type { ReviewerConfig } from "@owo/config"
+import { type ReviewerConfig, DEFAULT_REVIEWER_TOOLS } from "@owo/config"
 import type { ReviewerResult } from "./types"
 
 export type LaunchReviewerInput = {
@@ -48,6 +48,9 @@ export class ReviewManager {
       throw new Error(`Failed to create reviewer session: ${msg}`)
     }
 
+    // Merge default tools with config-specified tools
+    const tools = { ...DEFAULT_REVIEWER_TOOLS, ...input.config.tools }
+
     // Send prompt with retry logic for agent errors
     const sendPrompt = async (retryWithoutAgent = false): Promise<void> => {
       try {
@@ -55,6 +58,7 @@ export class ReviewManager {
           path: { id: sessionID },
           body: {
             ...(retryWithoutAgent ? {} : { agent: input.config.agent }),
+            tools,
             parts: [{ type: "text", text: this.buildReviewPrompt(input) }],
           },
         })

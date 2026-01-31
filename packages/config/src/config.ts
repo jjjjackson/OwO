@@ -9,9 +9,11 @@ export {
   PromptTemplateSchema,
   OrchestrationConfigSchema,
   ReviewerConfigSchema,
+  ReviewerToolsSchema,
   ReviewVerifyConfigSchema,
   ReviewOutputConfigSchema,
   CodeReviewConfigSchema,
+  DEFAULT_REVIEWER_TOOLS,
 } from "./schema"
 
 // Type exports
@@ -25,6 +27,7 @@ export type {
   PromptTemplate,
   OrchestrationConfig,
   ReviewerConfig,
+  ReviewerTools,
   ReviewVerifyConfig,
   ReviewOutputConfig,
   CodeReviewConfig,

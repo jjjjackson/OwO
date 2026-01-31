@@ -128,7 +128,7 @@
           "default": [{ "agent": "oracle" }],
           "minItems": 1,
           "maxItems": 2,
-          "items": {
+            "items": {
             "type": "object",
             "required": ["agent"],
             "properties": {
@@ -146,6 +146,9 @@
                 "items": {
                   "$ref": "#/$defs/context"
                 }
+              },
+              "tools": {
+                "$ref": "#/$defs/reviewerTools"
               }
             },
             "additionalProperties": false
@@ -161,6 +164,9 @@
               "items": {
                 "$ref": "#/$defs/context"
               }
+            },
+            "tools": {
+              "$ref": "#/$defs/reviewerTools"
             }
           },
           "additionalProperties": false
@@ -294,6 +300,18 @@
           },
           "additionalProperties": false
         }
+      ]
+    },
+    "reviewerTools": {
+      "type": "object",
+      "description": "Tool allowlist/denylist for reviewers. Default tools (read, grep, glob, lsp) are always enabled unless explicitly disabled.",
+      "additionalProperties": {
+        "type": "boolean",
+        "description": "Enable (true) or disable (false) this tool"
+      },
+      "examples": [
+        { "read": true, "grep": true, "bash": false },
+        { "lsp": true, "edit": false }
       ]
     }
   },

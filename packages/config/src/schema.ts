@@ -71,6 +71,28 @@ export const OrchestrationConfigSchema = z.object({
 export type OrchestrationConfig = z.infer<typeof OrchestrationConfigSchema>
 
 /**
+ * Tool allowlist/denylist for reviewers
+ * Maps tool names to enabled/disabled state
+ */
+export const ReviewerToolsSchema = z
+  .record(z.string(), z.boolean())
+  .optional()
+  .describe("Tool allowlist/denylist (e.g., { read: true, edit: false })")
+
+export type ReviewerTools = z.infer<typeof ReviewerToolsSchema>
+
+/**
+ * Default tools enabled for all reviewers
+ * These give reviewers read-only access to explore the codebase
+ */
+export const DEFAULT_REVIEWER_TOOLS: Record<string, boolean> = {
+  read: true, // Read files for full context
+  grep: true, // Search codebase for patterns
+  glob: true, // Find files by pattern
+  lsp: true, // Type info, find references, go to definition
+}
+
+/**
  * Single reviewer configuration
  * Uses an existing agent with optional focus/context overrides
  */
@@ -78,6 +100,7 @@ export const ReviewerConfigSchema = z.object({
   agent: z.string().describe("Agent name to use for review (e.g., oracle, explorer)"),
   focus: z.string().optional().describe("Short focus instruction to steer the review"),
   context: z.array(ContextSchema).optional().describe("Additional review instructions"),
+  tools: ReviewerToolsSchema.describe("Additional tools to enable/disable (merged with defaults)"),
 })
 
 export type ReviewerConfig = z.infer<typeof ReviewerConfigSchema>
@@ -87,6 +110,7 @@ export type ReviewerConfig = z.infer<typeof ReviewerConfigSchema>
  */
 export const ReviewVerifyConfigSchema = z.object({
   guidance: z.array(ContextSchema).optional().describe("Instructions for verification step"),
+  tools: ReviewerToolsSchema.describe("Tools for verification step (merged with defaults)"),
 })
 
 export type ReviewVerifyConfig = z.infer<typeof ReviewVerifyConfigSchema>
@@ -147,6 +171,7 @@ export const GitHubReviewerConfigSchema = ModelConfigSchema.extend({
     .optional()
     .describe("Reviewer prompt/instructions (inline or file reference)"),
   focus: z.string().optional().describe("Short focus area (e.g., 'security', 'performance')"),
+  tools: ReviewerToolsSchema.describe("Additional tools to enable/disable (merged with defaults)"),
 })
 
 export type GitHubReviewerConfig = z.infer<typeof GitHubReviewerConfigSchema>
