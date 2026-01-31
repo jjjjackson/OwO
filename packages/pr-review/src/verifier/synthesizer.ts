@@ -86,17 +86,26 @@ export async function verifyAndSynthesize(
     console.log(`[pr-review] Verifier completed in ${durationMs}ms`)
 
     // Filter comments to only those validated by verifier
-    const validatedComments = validCommentIds
-      ? commentsWithIds
-          .filter((c) => validCommentIds.includes(c.id))
-          .map(({ id: _, ...comment }) => comment) // Remove the temporary ID
-      : mergedComments // Fallback if verifier didn't return IDs
+    let validatedComments: SynthesizedReview["comments"]
 
-    if (validCommentIds) {
+    if (validCommentIds && validCommentIds.length > 0) {
+      console.log(
+        `[pr-review] Verifier returned ${validCommentIds.length} valid comment IDs: ${validCommentIds.join(", ")}`,
+      )
+      validatedComments = commentsWithIds
+        .filter((c) => validCommentIds.includes(c.id))
+        .map(({ id: _, ...comment }) => comment) // Remove the temporary ID
+
       const filtered = mergedComments.length - validatedComments.length
       if (filtered > 0) {
         console.log(`[pr-review] Verifier filtered out ${filtered} comments`)
       }
+    } else {
+      // Fallback if verifier didn't return IDs - use all merged comments
+      console.warn(
+        `[pr-review] Verifier did not return validCommentIds, using all ${mergedComments.length} comments`,
+      )
+      validatedComments = mergedComments
     }
 
     const criticalIssues = validatedComments.filter((c) => c.severity === "critical").length
@@ -251,11 +260,10 @@ interface ParsedOverviewResponse {
 
 export function parseOverviewResponse(response: string): ParsedOverviewResponse {
   // Try to find JSON in code block first
-  // Use greedy matching anchored to end-of-string to handle nested code blocks
-  // (e.g., mermaid diagrams inside the overview field)
-  const jsonMatch = response.match(/```json\n([\s\S]*)\n```(?=\s*$)/)
+  // Find all ```json blocks and try each one (in case of nested blocks or multiple attempts)
+  const jsonBlocks = [...response.matchAll(/```json\n([\s\S]*?)\n```/g)]
 
-  if (jsonMatch) {
+  for (const jsonMatch of jsonBlocks) {
     try {
       const parsed = JSON.parse(jsonMatch[1].trim())
       if (parsed.overview) {
@@ -267,21 +275,26 @@ export function parseOverviewResponse(response: string): ParsedOverviewResponse 
             : undefined,
         }
       }
-    } catch (e) {
-      console.warn("[pr-review] Failed to parse JSON from code block:", e)
-      // Add debugging info for troubleshooting
-      const content = jsonMatch[1]
-      console.warn("[pr-review] Content length:", content.length)
-      console.warn("[pr-review] Last 300 chars:", content.slice(-300))
+    } catch {
+      // Try next block
+      continue
     }
   }
 
-  // Try to find raw JSON object (without code block)
-  // Use a more careful regex that finds the outermost braces
-  const rawJsonMatch = response.match(/\{\s*"overview"\s*:\s*"[\s\S]*?\n\s*\}/)
-  if (rawJsonMatch) {
+  // Log if we found blocks but none parsed
+  if (jsonBlocks.length > 0) {
+    console.warn(`[pr-review] Found ${jsonBlocks.length} JSON blocks but none parsed successfully`)
+  }
+
+  // Try to find raw JSON object by locating outer braces
+  // This is more robust than regex for finding the JSON object
+  const firstBrace = response.indexOf("{")
+  const lastBrace = response.lastIndexOf("}")
+
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
     try {
-      const parsed = JSON.parse(rawJsonMatch[0])
+      const potentialJson = response.slice(firstBrace, lastBrace + 1)
+      const parsed = JSON.parse(potentialJson)
       if (parsed.overview) {
         return {
           overview: parsed.overview,
@@ -292,13 +305,16 @@ export function parseOverviewResponse(response: string): ParsedOverviewResponse 
         }
       }
     } catch (e) {
-      console.warn("[pr-review] Failed to parse raw JSON:", e)
+      // Silent failure here is expected if the braces don't form valid JSON
+      // We'll fall back to regex extraction
+      console.warn("[pr-review] Failed to parse raw JSON, using fallback regex extraction:", e)
     }
   }
 
   // Try extracting fields directly with a more lenient approach
   // This handles cases where the JSON has escaped newlines in the string
-  const overviewMatch = response.match(/"overview"\s*:\s*"([\s\S]*?)"\s*,\s*"passed"/)
+  // Relaxed regex to not require "passed" to follow "overview" immediately
+  const overviewMatch = response.match(/"overview"\s*:\s*"([\s\S]*?)(?<!\\)"\s*(,|})/)
   const passedMatch = response.match(/"passed"\s*:\s*(true|false)/)
   const validIdsMatch = response.match(/"validCommentIds"\s*:\s*\[([\s\S]*?)\]/)
 
