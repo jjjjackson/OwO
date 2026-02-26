@@ -224,30 +224,6 @@
           },
           "additionalProperties": false
         },
-        "jira": {
-          "type": "object",
-          "description": "Jira issue tracking tool",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable Jira tools (requires JIRA_API_TOKEN env var)"
-            },
-            "key": {
-              "type": "string",
-              "description": "API token (prefer env var instead)"
-            },
-            "cloudId": {
-              "type": "string",
-              "description": "Jira Cloud ID"
-            },
-            "email": {
-              "type": "string",
-              "description": "Jira account email"
-            }
-          },
-          "additionalProperties": false
-        },
         "coderabbit": {
           "type": "object",
           "description": "CodeRabbit code review tool",

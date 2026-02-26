@@ -83,12 +83,6 @@
     "grep_app": {
       "enabled": true
     },
-    "jira": {
-      "enabled": true,
-      "cloudId": "your-cloud-id",
-      "email": "you@company.com",
-      "key": "your-jira-api-token"
-    },
     "coderabbit": {
       "enabled": true,
       "key": "your-coderabbit-api-key"

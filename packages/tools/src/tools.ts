@@ -1,7 +1,7 @@
 /**
  * @owo/tools
  *
- * API-based tools for OpenCode: exa, context7, jira, coderabbit.
+ * API-based tools for OpenCode: exa, context7, coderabbit.
  * Tools are disabled by default - enable via owo.json config.
  */
 
@@ -10,7 +10,6 @@ import { loadConfig } from "@owo/config"
 import type { ToolsConfig, ToolFactoryContext } from "./types"
 import { loadExaTools } from "./exa"
 import { loadContext7Tools } from "./context7"
-import { loadJiraTools } from "./jira"
 import { loadCodeRabbitTools } from "./coderabbit"
 import { loadGrepAppTools } from "./grep-app"
 
@@ -62,14 +61,6 @@ const ToolsPlugin: Plugin = async (ctx) => {
     }
   }
 
-  // Load Jira tools
-  if (toolsConfig.jira) {
-    const jiraTools = loadJiraTools(toolsConfig.jira, factoryCtx)
-    if (jiraTools) {
-      Object.assign(tools, jiraTools)
-    }
-  }
-
   // Load CodeRabbit tools
   if (toolsConfig.coderabbit) {
     const coderabbitTools = loadCodeRabbitTools(toolsConfig.coderabbit, factoryCtx)
@@ -96,7 +87,6 @@ export type {
   ToolsConfig,
   ExaToolConfig,
   Context7ToolConfig,
-  JiraToolConfig,
   CodeRabbitToolConfig,
   GrepAppToolConfig,
   ToolFactoryContext,

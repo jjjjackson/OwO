@@ -22,11 +22,6 @@ Enable tools in `~/.config/opencode/owo.json` (or `.opencode/owo.json`):
     "exa": { "enabled": true },
     "context7": { "enabled": true },
     "grep_app": { "enabled": true },
-    "jira": {
-      "enabled": true,
-      "cloudId": "your-cloud-id",
-      "email": "you@company.com"
-    },
     "coderabbit": { "enabled": true }
   }
 }
@@ -36,12 +31,11 @@ Enable tools in `~/.config/opencode/owo.json` (or `.opencode/owo.json`):
 
 Set API keys as environment variables (recommended):
 
-| Tool       | Environment Variable | Get Key                                                     |
-| ---------- | -------------------- | ----------------------------------------------------------- |
-| Exa        | `EXA_API_KEY`        | https://exa.ai                                              |
-| Context7   | `CONTEXT7_API_KEY`   | https://context7.com/dashboard                              |
-| Jira       | `JIRA_API_TOKEN`     | https://id.atlassian.com/manage-profile/security/api-tokens |
-| CodeRabbit | `CODERABBIT_API_KEY` | https://coderabbit.ai                                       |
+| Tool       | Environment Variable | Get Key                            |
+| ---------- | -------------------- | ---------------------------------- |
+| Exa        | `EXA_API_KEY`        | https://exa.ai                     |
+| Context7   | `CONTEXT7_API_KEY`   | https://context7.com/dashboard     |
+| CodeRabbit | `CODERABBIT_API_KEY` | https://coderabbit.ai              |
 
 Alternatively, you can set keys directly in config (not recommended for shared configs):
 
@@ -75,13 +69,6 @@ Query up-to-date library documentation and code examples.
 Search public GitHub repositories - no API key required!
 
 - `grep_app_search` - Search code across 1M+ public GitHub repos
-
-### Jira
-
-Interact with Jira issues.
-
-- `jira` - Fetch a Jira issue by key
-- `jira_search` - Search issues with JQL
 
 ### CodeRabbit
 

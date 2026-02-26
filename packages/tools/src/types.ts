@@ -19,14 +19,6 @@ export interface ExaToolConfig extends BaseToolConfig {}
 export interface Context7ToolConfig extends BaseToolConfig {}
 
 /**
- * Jira issue tracking tool config
- */
-export interface JiraToolConfig extends BaseToolConfig {
-  cloudId?: string
-  email?: string
-}
-
-/**
  * CodeRabbit code review tool config
  */
 export interface CodeRabbitToolConfig extends BaseToolConfig {}
@@ -44,7 +36,6 @@ export interface GrepAppToolConfig {
 export interface ToolsConfig {
   exa?: ExaToolConfig
   context7?: Context7ToolConfig
-  jira?: JiraToolConfig
   coderabbit?: CodeRabbitToolConfig
   grep_app?: GrepAppToolConfig
 }
