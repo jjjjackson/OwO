@@ -55,6 +55,10 @@ export type PromptTemplate = z.infer<typeof PromptTemplateSchema>
 
 export const PromptInjectorConfigSchema = z.object({
   enabled: z.boolean().optional().default(true),
+  global: z
+    .array(ContextSchema)
+    .optional()
+    .describe("Global context applied to ALL agents (e.g., language preferences)"),
   agents: z.record(z.string(), PromptTemplateSchema).optional(),
 })
 

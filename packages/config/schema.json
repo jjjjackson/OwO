@@ -76,6 +76,13 @@
           "default": true,
           "description": "Enable/disable prompt injection"
         },
+        "global": {
+          "type": "array",
+          "description": "Global context applied to ALL agents (e.g., language preferences)",
+          "items": {
+            "$ref": "#/$defs/context"
+          }
+        },
         "agents": {
           "type": "object",
           "description": "Agent-specific prompt configurations",
