@@ -237,6 +237,37 @@ export const GitHubReviewConfigSchema = z.object({
 export type GitHubReviewConfig = z.infer<typeof GitHubReviewConfigSchema>
 
 /**
+ * Skill model override configuration
+ * Allows specifying a different LLM for specific skills
+ * When a skill with model override is loaded, it spawns a subagent with that model
+ */
+export const SkillModelConfigSchema = z.object({
+  model: z
+    .string()
+    .describe("Model in provider/model format (e.g., anthropic/claude-opus-4-5)"),
+  variant: z
+    .enum(["low", "default", "high"])
+    .optional()
+    .describe("Thinking level / variant"),
+  temperature: z.number().min(0).max(2).optional().describe("Temperature for this skill"),
+})
+
+export type SkillModelConfig = z.infer<typeof SkillModelConfigSchema>
+
+/**
+ * Skills configuration - maps skill names to model overrides
+ */
+export const SkillsConfigSchema = z.object({
+  enabled: z.boolean().optional().default(true).describe("Enable/disable skill model overrides"),
+  overrides: z
+    .record(z.string(), SkillModelConfigSchema)
+    .optional()
+    .describe("Skill name to model configuration mapping"),
+})
+
+export type SkillsConfig = z.infer<typeof SkillsConfigSchema>
+
+/**
  * Base tool configuration (enabled + optional API key)
  */
 export const BaseToolConfigSchema = z.object({
@@ -311,6 +342,7 @@ export const OwoConfigSchema = z.object({
   review: CodeReviewConfigSchema.optional(),
   "github-review": GitHubReviewConfigSchema.optional(),
   tools: ToolsConfigSchema.optional(),
+  skills: SkillsConfigSchema.optional(),
 })
 
 export type OwoConfig = z.infer<typeof OwoConfigSchema>

@@ -14,6 +14,8 @@ export {
   ReviewOutputConfigSchema,
   CodeReviewConfigSchema,
   DEFAULT_REVIEWER_TOOLS,
+  SkillModelConfigSchema,
+  SkillsConfigSchema,
 } from "./schema"
 
 // Type exports
@@ -31,6 +33,8 @@ export type {
   ReviewVerifyConfig,
   ReviewOutputConfig,
   CodeReviewConfig,
+  SkillModelConfig,
+  SkillsConfig,
 } from "./schema"
 
 // Loader exports

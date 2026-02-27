@@ -261,6 +261,25 @@
         }
       },
       "additionalProperties": false
+    },
+    "skills": {
+      "type": "object",
+      "description": "Skill model override configuration - specify different LLMs for specific skills",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable skill model overrides"
+        },
+        "overrides": {
+          "type": "object",
+          "description": "Skill name to model configuration mapping",
+          "additionalProperties": {
+            "$ref": "#/$defs/skillModelConfig"
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "$defs": {
@@ -296,6 +315,29 @@
         { "read": true, "grep": true, "bash": false },
         { "lsp": true, "edit": false }
       ]
+    },
+    "skillModelConfig": {
+      "type": "object",
+      "description": "Model configuration for a specific skill",
+      "required": ["model"],
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model in provider/model format (e.g., anthropic/claude-opus-4-5)"
+        },
+        "variant": {
+          "type": "string",
+          "enum": ["low", "default", "high"],
+          "description": "Thinking level / variant"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature for this skill"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

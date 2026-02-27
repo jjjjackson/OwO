@@ -1,0 +1,34 @@
+{
+  "name": "@owo/skill-runner",
+  "version": "0.1.0",
+  "description": "Skill model override plugin - run skills with specific LLMs via subagents",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "./src/skill-runner.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/skill-runner.d.ts",
+      "default": "./dist/skill-runner.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "make": "bun build src/skill-runner.ts --outdir dist --target bun --external '@opencode-ai/*' --external '@owo/*' --external 'zod' && tsgo --emitDeclarationOnly",
+    "prepublishOnly": "bun run make",
+    "compile": "tsgo --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "catalog:",
+    "@opencode-ai/sdk": "catalog:",
+    "@owo/config": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "@typescript/native-preview": "catalog:"
+  }
+}

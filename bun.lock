@@ -98,6 +98,19 @@
         "@typescript/native-preview": "catalog:",
       },
     },
+    "packages/skill-runner": {
+      "name": "@owo/skill-runner",
+      "version": "0.1.0",
+      "dependencies": {
+        "@opencode-ai/plugin": "catalog:",
+        "@opencode-ai/sdk": "catalog:",
+        "@owo/config": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "@typescript/native-preview": "catalog:",
+      },
+    },
     "packages/tools": {
       "name": "@owo/tools",
       "version": "0.0.1",
@@ -165,6 +178,8 @@
     "@owo/pr-review": ["@owo/pr-review@workspace:packages/pr-review"],
 
     "@owo/prompt-injector": ["@owo/prompt-injector@workspace:packages/prompt-injector"],
+
+    "@owo/skill-runner": ["@owo/skill-runner@workspace:packages/skill-runner"],
 
     "@owo/tools": ["@owo/tools@workspace:packages/tools"],
 
